@@ -161,6 +161,26 @@ export interface TopItemsResponse {
   items: TopItem[];
 }
 
+// ── Item History (all budgets) ───────────────
+export interface ItemHistoryEntry {
+  budget_id: number;
+  budget_title: string;
+  month: number;
+  year: number;
+  category: string;
+  label: string;
+  projected_cost: string;
+  actual_cost: string;
+  difference: string;
+}
+
+export interface ItemHistoryResponse {
+  label: string;
+  entries: ItemHistoryEntry[];
+  total_projected: string;
+  total_actual: string;
+}
+
 // ── Multi-month Comparison ───────────────────
 export interface BudgetComparisonEntry {
   budget_id: number;

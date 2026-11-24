@@ -5,7 +5,8 @@
  * - Overall: income vs. expenses, the cash balance (savings
  *   trajectory) over time, and the top expense rows across all
  *   budgets, with the SOLL plan as dashed lines
- *   (moved here from the former Comparison page).
+ *   (moved here from the former Comparison page). Clicking a top
+ *   expense row opens its full history across all budgets.
  * - Monthly: single-budget charts — expenses by category (SOLL vs
  *   IST), the expense distribution donut, and per-category variance
  *   (SOLL − IST), with click-to-drill-down into a category's items
@@ -35,6 +36,7 @@ import {
 import { budgetsApi } from '../api';
 import { CategoryDrillDownModal } from '../components/CategoryDrillDownModal';
 import { ChartContainer } from '../components/ChartContainer';
+import { ExpenseHistoryModal } from '../components/ExpenseHistoryModal';
 import { Spinner } from '../components/Spinner';
 import { formatCurrency, formatMonthYear, toNumber } from '../utils/format';
 import { pillButtonClass } from '../utils/ui';import { queryKeys } from '../utils/queryKeys';
@@ -112,6 +114,8 @@ export function ChartsPage() {
   const [tab, setTab] = useState<ChartTab>('overall');
   const [selectedBudgetId, setSelectedBudgetId] = useState<number | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  // Row label clicked in the top-expenses chart (opens its history)
+  const [historyLabel, setHistoryLabel] = useState<string | null>(null);
 
   const { data: budgets } = useQuery({
     queryKey: queryKeys.budgets,
@@ -376,6 +380,12 @@ export function ChartsPage() {
                       name={t('charts.series.spentIst')}
                       shape={renderTopItemBar}
                       radius={[0, 4, 4, 0]}
+                      onClick={(data) =>
+                        setHistoryLabel(
+                          (data as { label?: string })?.label ?? null,
+                        )
+                      }
+                      className="cursor-pointer"
                     >
                       {/* Medals on the top three bars */}
                       <LabelList dataKey="value" content={MedalBadge} />
@@ -603,6 +613,14 @@ export function ChartsPage() {
           budgetId={budgetId}
           categoryName={selectedCategory}
           onClose={() => setSelectedCategory(null)}
+        />
+      )}
+
+      {/* ── Expense history modal (overall tab, top-expenses chart) */}
+      {historyLabel && (
+        <ExpenseHistoryModal
+          label={historyLabel}
+          onClose={() => setHistoryLabel(null)}
         />
       )}
     </div>

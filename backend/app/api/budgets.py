@@ -24,6 +24,8 @@ from app.schemas.summary import (
     BudgetComparison,
     CategoryTrendResponse,
     ChartDataPoint,
+    ItemHistoryEntry,
+    ItemHistoryResponse,
     TopItem,
     TopItemsResponse,
     YearlyComparison,
@@ -174,6 +176,59 @@ def top_items(
             TopItem(label=label, category=category, total=total)
             for total, category, label in ranked
         ]
+    )
+
+
+@router.get(
+    "/item-history",
+    response_model=ItemHistoryResponse,
+    summary="All expense item entries for one row label across all budgets",
+)
+def item_history(
+    label: str = Query(min_length=1),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ItemHistoryResponse:
+    """List every expense item matching `label` across ALL budgets.
+
+    The companion endpoint to `/top-items`: clicking a bar in the
+    top-expenses chart drills into the row's full history. Labels are
+    matched case-insensitively (same aggregation rule as top-items);
+    entries are returned in chronological budget order with per-entry
+    SOLL/IST/difference and the summed totals.
+    """
+    needle = label.strip().lower()
+    entries: list[ItemHistoryEntry] = []
+    total_projected = Decimal("0")
+    total_actual = Decimal("0")
+
+    budgets = sorted(current_user.budgets, key=lambda b: (b.year, b.month, b.id))
+    for budget in budgets:
+        for category in budget.categories:
+            for item in category.items:
+                if item.label.strip().lower() != needle:
+                    continue
+                entries.append(
+                    ItemHistoryEntry(
+                        budget_id=budget.id,
+                        budget_title=budget.title,
+                        month=budget.month,
+                        year=budget.year,
+                        category=category.name,
+                        label=item.label,
+                        projected_cost=item.projected_cost,
+                        actual_cost=item.actual_cost,
+                        difference=item.actual_cost - item.projected_cost,
+                    )
+                )
+                total_projected += item.projected_cost
+                total_actual += item.actual_cost
+
+    return ItemHistoryResponse(
+        label=label,
+        entries=entries,
+        total_projected=total_projected,
+        total_actual=total_actual,
     )
 
 

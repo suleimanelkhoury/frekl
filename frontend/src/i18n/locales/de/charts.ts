@@ -54,6 +54,18 @@ const charts = {
     actualBalance: 'Tatsächlicher Saldo (IST)',
   },
   tip: 'Tipp: Klicke auf einen Balken oder ein Tortenstück, um die Posten dieser Kategorie zu sehen.',
+  history: {
+    title: 'Ausgabenverlauf — {{name}}',
+    empty: 'Keine Ausgaben-Einträge für diese Zeile gefunden.',
+    budget: 'Budget',
+    category: 'Kategorie',
+    projected: 'SOLL',
+    actual: 'IST',
+    difference: 'Differenz',
+    total: 'Gesamt',
+    entries_one: '{{count}} Eintrag',
+    entries_other: '{{count}} Einträge',
+  },
 };
 
 export default charts;

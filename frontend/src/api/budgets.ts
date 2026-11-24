@@ -13,6 +13,7 @@ import type {
   CategoryTrend,
   ChartData,
   ExcelImportResponse,
+  ItemHistoryResponse,
   TopItemsResponse,
   YearlyComparison,
 } from '../types';
@@ -76,6 +77,15 @@ export const budgetsApi = {
   /** Expense rows ranked by summed actual spending across all budgets. */
   getTopItems: async (): Promise<TopItemsResponse> => {
     const response = await api.get<TopItemsResponse>('/budgets/top-items');
+    return response.data;
+  },
+
+  /** Every expense item entry for one row label across all budgets. */
+  getItemHistory: async (label: string): Promise<ItemHistoryResponse> => {
+    const response = await api.get<ItemHistoryResponse>(
+      '/budgets/item-history',
+      { params: { label } },
+    );
     return response.data;
   },
 

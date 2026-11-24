@@ -99,6 +99,31 @@ class TopItemsResponse(BaseModel):
     items: list[TopItem]
 
 
+class ItemHistoryEntry(BaseModel):
+    """A single expense item occurrence of one row label, in one budget."""
+
+    budget_id: int
+    budget_title: str
+    month: int
+    year: int
+    # Category the item lives in (the same row label can appear in
+    # different categories across budgets)
+    category: str
+    label: str
+    projected_cost: Decimal
+    actual_cost: Decimal
+    difference: Decimal
+
+
+class ItemHistoryResponse(BaseModel):
+    """Every expense item entry for one row label across ALL budgets."""
+
+    label: str
+    entries: list[ItemHistoryEntry]
+    total_projected: Decimal
+    total_actual: Decimal
+
+
 class BudgetComparisonEntry(BaseModel):
     """A single budget's totals within a multi-month comparison."""
 

@@ -280,3 +280,101 @@ class TestTopItems:
         items = response.json()["items"]
         assert len(items) == 2
         assert [i["label"] for i in items] == ["Row3", "Row2"]
+
+
+class TestItemHistory:
+    """GET /api/budgets/item-history — every entry of one row label."""
+
+    def test_lists_entries_chronologically(self, client, auth_headers, budget):
+        # Budget 1 (July 2026, the `budget` fixture): two Lidl entries
+        bid = budget["id"]
+        r = client.post(
+            f"/api/budgets/{bid}/categories",
+            json={"name": "Essen"},
+            headers=auth_headers,
+        )
+        cat = r.json()["id"]
+        client.post(
+            f"/api/categories/{cat}/items",
+            json={"label": "Lidl", "projected_cost": "100", "actual_cost": "120.50"},
+            headers=auth_headers,
+        )
+        client.post(
+            f"/api/categories/{cat}/items",
+            json={"label": "Aldi", "actual_cost": "80.00"},
+            headers=auth_headers,
+        )
+
+        # Budget 2 (December 2026): same row again, different spelling
+        r = client.post(
+            "/api/budgets/",
+            json={"title": "Next Month", "month": 12, "year": 2026},
+            headers=auth_headers,
+        )
+        bid2 = r.json()["id"]
+        r = client.post(
+            f"/api/budgets/{bid2}/categories",
+            json={"name": "Haushalt"},
+            headers=auth_headers,
+        )
+        cat2 = r.json()["id"]
+        client.post(
+            f"/api/categories/{cat2}/items",
+            json={"label": "LIDL", "projected_cost": "30", "actual_cost": "30.25"},
+            headers=auth_headers,
+        )
+
+        response = client.get(
+            "/api/budgets/item-history",
+            params={"label": "Lidl"},
+            headers=auth_headers,
+        )
+        assert response.status_code == 200
+        data = response.json()
+
+        # Case-insensitive match across budgets, chronological order
+        assert data["label"] == "Lidl"
+        assert len(data["entries"]) == 2
+        assert data["entries"][0]["budget_id"] == bid
+        assert data["entries"][0]["month"] == 7
+        assert data["entries"][0]["category"] == "Essen"
+        assert Decimal(data["entries"][0]["actual_cost"]) == Decimal("120.50")
+        assert Decimal(data["entries"][0]["difference"]) == Decimal("20.50")
+        assert data["entries"][1]["budget_id"] == bid2
+        assert data["entries"][1]["category"] == "Haushalt"
+        assert Decimal(data["entries"][1]["actual_cost"]) == Decimal("30.25")
+
+        # Totals sum over all matching entries
+        assert Decimal(data["total_projected"]) == Decimal("130.00")
+        assert Decimal(data["total_actual"]) == Decimal("150.75")
+
+    def test_other_labels_not_matched(self, client, auth_headers, budget):
+        bid = budget["id"]
+        r = client.post(
+            f"/api/budgets/{bid}/categories",
+            json={"name": "Essen"},
+            headers=auth_headers,
+        )
+        cat = r.json()["id"]
+        client.post(
+            f"/api/categories/{cat}/items",
+            json={"label": "Aldi", "actual_cost": "40"},
+            headers=auth_headers,
+        )
+
+        response = client.get(
+            "/api/budgets/item-history",
+            params={"label": "Lidl"},
+            headers=auth_headers,
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["entries"] == []
+        assert Decimal(data["total_projected"]) == Decimal("0")
+        assert Decimal(data["total_actual"]) == Decimal("0")
+
+    def test_requires_auth(self, client):
+        response = client.get(
+            "/api/budgets/item-history", params={"label": "Lidl"}
+        )
+        assert response.status_code == 401

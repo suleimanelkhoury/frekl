@@ -52,6 +52,18 @@ const charts = {
     actualBalance: 'Actual Balance',
   },
   tip: "Tip: click a bar or pie slice to see that category's items.",
+  history: {
+    title: 'Expense history — {{name}}',
+    empty: 'No expense entries found for this row.',
+    budget: 'Budget',
+    category: 'Category',
+    projected: 'Projected',
+    actual: 'Actual',
+    difference: 'Difference',
+    total: 'Total',
+    entries_one: '{{count}} entry',
+    entries_other: '{{count}} entries',
+  },
 };
 
 export default charts;
