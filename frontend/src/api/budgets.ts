@@ -13,6 +13,7 @@ import type {
   CategoryTrend,
   ChartData,
   ExcelImportResponse,
+  BudgetAnalysisResponse,
   ItemHistoryResponse,
   TopItemsResponse,
   YearlyComparison,
@@ -86,6 +87,12 @@ export const budgetsApi = {
       '/budgets/item-history',
       { params: { label } },
     );
+    return response.data;
+  },
+
+  /** One-time rows and rows with very similar names, all budgets. */
+  getAnalysis: async (): Promise<BudgetAnalysisResponse> => {
+    const response = await api.get<BudgetAnalysisResponse>('/budgets/analysis');
     return response.data;
   },
 

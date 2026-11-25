@@ -124,6 +124,40 @@ class ItemHistoryResponse(BaseModel):
     total_actual: Decimal
 
 
+class RowUsage(BaseModel):
+    """How often one expense row label occurs across all budgets."""
+
+    label: str
+    # Category of the row's first occurrence (display context)
+    category: str
+    occurrences: int
+    # Number of distinct budgets the label appears in
+    budget_count: int
+    total_actual: Decimal
+    # Budget of the row's first occurrence (display context for
+    # one-time rows)
+    month: int
+    year: int
+
+
+class SimilarNameGroup(BaseModel):
+    """A cluster of expense row labels with very similar names."""
+
+    labels: list[RowUsage]
+
+
+class BudgetAnalysisResponse(BaseModel):
+    """Label analysis across all budgets.
+
+    `one_time` holds rows that occurred exactly once; `similar` holds
+    clusters of row labels whose names are near-duplicates (likely the
+    same recurring row spelled differently).
+    """
+
+    one_time: list[RowUsage]
+    similar: list[SimilarNameGroup]
+
+
 class BudgetComparisonEntry(BaseModel):
     """A single budget's totals within a multi-month comparison."""
 

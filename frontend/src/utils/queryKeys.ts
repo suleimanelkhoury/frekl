@@ -21,6 +21,7 @@ export const queryKeys = {
   yearlyComparison: ['budget-comparison-yearly'] as const,
   topItems: ['top-items'] as const,
   itemHistory: (label: string) => ['item-history', label] as const,
+  analysis: ['budget-analysis'] as const,
 };
 
 /**

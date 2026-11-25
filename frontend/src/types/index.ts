@@ -181,6 +181,26 @@ export interface ItemHistoryResponse {
   total_actual: string;
 }
 
+// ── Budget Analysis (label hygiene, all budgets) ──
+export interface RowUsage {
+  label: string;
+  category: string;
+  occurrences: number;
+  budget_count: number;
+  total_actual: string;
+  month: number;
+  year: number;
+}
+
+export interface SimilarNameGroup {
+  labels: RowUsage[];
+}
+
+export interface BudgetAnalysisResponse {
+  one_time: RowUsage[];
+  similar: SimilarNameGroup[];
+}
+
 // ── Multi-month Comparison ───────────────────
 export interface BudgetComparisonEntry {
   budget_id: number;

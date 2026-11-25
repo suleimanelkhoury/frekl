@@ -21,6 +21,7 @@ from app.schemas.budget import (
     BudgetUpdate,
 )
 from app.schemas.summary import (
+    BudgetAnalysisResponse,
     BudgetComparison,
     CategoryTrendResponse,
     ChartDataPoint,
@@ -30,6 +31,7 @@ from app.schemas.summary import (
     TopItemsResponse,
     YearlyComparison,
 )
+from app.services.analysis import analyze_user_labels
 from app.services.excel_export import build_budget_excel
 from app.services.ownership import get_user_budget
 from app.services.summary import compare_user_budgets, compare_user_by_year
@@ -230,6 +232,26 @@ def item_history(
         total_projected=total_projected,
         total_actual=total_actual,
     )
+
+
+@router.get(
+    "/analysis",
+    response_model=BudgetAnalysisResponse,
+    summary="One-time rows and rows with very similar names across all budgets",
+)
+def analysis(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> BudgetAnalysisResponse:
+    """Analyze expense row labels across ALL of the user's budgets.
+
+    Returns two lists: rows that occurred exactly once ever, and
+    clusters of rows whose names are near-duplicates (likely the same
+    recurring row spelled differently). Intended for cleaning up the
+    row vocabulary — surfaced behind the Settings page's analysis
+    button.
+    """
+    return analyze_user_labels(current_user)
 
 
 @router.post(

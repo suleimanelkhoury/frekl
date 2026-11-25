@@ -1,21 +1,27 @@
 /**
- * Settings Page — user profile, language, change password, logout.
+ * Settings Page — user profile, language, budget analysis, change
+ * password, logout.
  *
  * Shows the current user's email and account creation date, the
- * language switcher, and a logout button. (Password change is a
- * placeholder for now.)
+ * language switcher, a budget-analysis launcher (one-time rows and
+ * near-duplicate row names), and a logout button. (Password change is
+ * a placeholder for now.)
  */
 
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
+import { BudgetAnalysisModal } from '../components/BudgetAnalysisModal';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { formatDate } from '../utils/format';
+import { neutralButtonClass } from '../utils/ui';
 
 export function SettingsPage() {
   const { user, logout } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [analysisOpen, setAnalysisOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -67,6 +73,25 @@ export function SettingsPage() {
 
       <hr className="mb-8 border-gray-200 dark:border-gray-700" />
 
+      {/* ── Budget analysis ───────────────────── */}
+      <section className="mb-8">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+          {t('settings.analysis.title')}
+        </h2>
+        <p className="mb-4 text-sm text-gray-500 dark:text-gray-500">
+          {t('settings.analysis.hint')}
+        </p>
+        <button
+          type="button"
+          onClick={() => setAnalysisOpen(true)}
+          className={neutralButtonClass}
+        >
+          {t('settings.analysis.open')}
+        </button>
+      </section>
+
+      <hr className="mb-8 border-gray-200 dark:border-gray-700" />
+
       {/* ── Change password (placeholder) ─────── */}
       <section className="mb-8">
         <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
@@ -94,6 +119,11 @@ export function SettingsPage() {
           {t('settings.logout.title')}
         </button>
       </section>
+
+      {/* ── Budget analysis modal ─────────────── */}
+      {analysisOpen && (
+        <BudgetAnalysisModal onClose={() => setAnalysisOpen(false)} />
+      )}
     </div>
   );
 }
