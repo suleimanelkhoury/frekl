@@ -60,15 +60,17 @@ const dashboard = {
       'Average consumption across {{count}} budget in {{year}} — investments excluded',
     avgExpensesTitle_other:
       'Average consumption across {{count}} budgets in {{year}} — investments excluded',
-    endOfYearBalance: 'End-of-Year Balance',
-    balanceTitle: 'Remaining cash as of {{title}}',
+    earned: 'Earned (Net)',
+    earnedTitle_one: 'Sum of actual net across {{count}} budget in {{year}}',
+    earnedTitle_other:
+      'Sum of actual net across {{count}} budgets in {{year}}',
+    bar: {
+      consumption: 'Consumption',
+      invested: 'Invested',
+    },
     overallInvested: 'Overall Invested',
     overallInvestedTitle:
       'Total transferred into investments (Investitionen category) in {{year}}',
-    avgMonthlyInvesting: 'Avg. Monthly Investing',
-    avgInvestingTitle_one: 'Average across {{count}} budget in {{year}}',
-    avgInvestingTitle_other: 'Average across {{count}} budgets in {{year}}',
-    investingRate: 'Investing Rate',
     investingRateTitle:
       'Invested ÷ overall income (new money, carryover excluded). On average the same for every month.',
   },

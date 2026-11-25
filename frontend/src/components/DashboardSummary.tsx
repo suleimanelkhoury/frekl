@@ -1,33 +1,33 @@
 /**
- * DashboardSummary — stat strips above the budget grid, with a year
- * selector so the numbers can be viewed for any year with budgets.
+ * DashboardSummary — a single year-overview "money snapshot" above the
+ * budget grid, with a year selector so the numbers can be viewed for
+ * any year with budgets.
  *
- * Row 1: money-flow overview for the selected year. "Expenses" tiles
- * show consumption only (investments excluded — see the Investing row).
- *
- * Row 2: investing — total invested in the selected year, monthly
- * average, and the investing rate (share of new income that went into
- * investments).
+ * Layout (one flat panel, hierarchy by size instead of card grids):
+ * - Hero: the year's earned Gehalt (Σ actual Gehalt — summing only
+ *   Gehalt is safe; Extra is the monthly carryover and must never be
+ *   summed).
+ * - Money-flow bar: how the spent money split into consumption and
+ *   investing (leftovers reach investments via the carryover, so
+ *   there is no separate "saved" slice).
+ * - Inline stat row: the remaining numbers as quiet label/value pairs
+ *   separated by a hairline, not boxed tiles.
  *
  * Note on the money model: each month's remaining balance is carried
  * into the next month as its SOLL Extra, so monthly balances and Extra
  * income must NOT be summed across months (the same money would be
  * counted repeatedly). Instead:
  *
- *   - Overall Income        = overall expenses + end-of-year balance
- *                             − January carryover (new money in =
- *                             money out + pile growth; "expenses"
- *                             includes investing)
- *   - End-of-Year Balance   = the latest month's IST balance in the year
+ *   - Overall Income = overall expenses + end-of-year balance
+ *     − January carryover (new money in = money out + pile growth)
  *
  * Renders nothing while loading or when no budgets exist.
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { budgetsApi } from '../api';
-import { balanceColor } from '../utils/balance';
 import { formatCurrency, toNumber } from '../utils/format';
 import { queryKeys } from '../utils/queryKeys';
 import { neutralButtonClass, pillButtonClass } from '../utils/ui';
@@ -43,30 +43,44 @@ const CategorySpendingModal = lazy(() =>
 import type { BudgetComparisonEntry } from '../types';
 import { ChartPieIcon } from './Icons';
 
-interface StatTileProps {
+/** A quiet label/value pair in the inline stat row (no card box). */
+function InlineStat({
+  label,
+  title,
+  children,
+}: {
   label: string;
-  value: string;
-  valueClassName?: string;
   title?: string;
-}
-
-function StatTile({ label, value, valueClassName, title }: StatTileProps) {
+  children: ReactNode;
+}) {
   return (
-    <div
-      className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
-      title={title}
-    >
-      <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-500">
-        {label}
-      </p>
-      <p
-        className={`mt-1 truncate text-lg font-semibold ${
-          valueClassName ?? 'text-gray-900 dark:text-gray-100'
-        }`}
-      >
-        {value}
+    <div title={title}>
+      <p className="text-xs text-gray-500 dark:text-gray-500">{label}</p>
+      <p className="mt-0.5 text-sm font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+        {children}
       </p>
     </div>
+  );
+}
+
+/** Legend item for the money-flow bar (dot + label + amount). */
+function LegendItem({
+  dotClassName,
+  label,
+  amount,
+}: {
+  dotClassName: string;
+  label: string;
+  amount: string;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+      <span aria-hidden="true" className={`h-2 w-2 rounded-full ${dotClassName}`} />
+      {label}
+      <span className="font-medium tabular-nums text-gray-900 dark:text-gray-100">
+        {amount}
+      </span>
+    </span>
   );
 }
 
@@ -119,12 +133,20 @@ export function DashboardSummary() {
   const ytdSavings = currentBalance - startCarryover;
   const ytdIncome = ytdSavings + ytdExpenses;
 
+  // ── Earned ──────────────────────────────────
+  // Σ actual Gehalt — new money earned in the year. Only Gehalt is
+  // summed; Extra is the monthly carryover (previous months' balances)
+  // and would count the same money repeatedly.
+  const earned = entries.reduce(
+    (sum, e) => sum + toNumber(e.total_actual_gehalt),
+    0,
+  );
+
   // ── Investing ───────────────────────────────
   // invested is already computed per year by the backend (sum of the
   // Investitionen category's actual costs).
   const yearEntry = yearly?.years.find((y) => y.year === activeYear);
   const invested = yearEntry ? toNumber(yearEntry.invested) : 0;
-  const avgInvested = invested / entries.length;
   // Share of new income that went into investments. On average this is
   // the same per month, so one rate covers both views.
   const investingRate = ytdIncome > 0 ? (invested / ytdIncome) * 100 : null;
@@ -132,6 +154,12 @@ export function DashboardSummary() {
   // ── Consumption (investments excluded) ──────
   const ytdConsumption = ytdExpenses - invested;
   const avgConsumption = ytdConsumption / entries.length;
+
+  // ── Money-flow bar ──────────────────────────
+  // How the spent money split into consumption and investing.
+  const barVisible = ytdExpenses > 0;
+  const consumptionPct = barVisible ? (ytdConsumption / ytdExpenses) * 100 : 0;
+  const investedPct = barVisible ? (invested / ytdExpenses) * 100 : 0;
 
   return (
     <div className="mb-6">
@@ -162,67 +190,98 @@ export function DashboardSummary() {
         </button>
       </div>
 
-      {/* ── Row 1: money-flow overview ──────────── */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatTile
-          label={t('dashboard.summary.overallIncome')}
-          value={formatCurrency(ytdIncome)}
-          title={t('dashboard.summary.overallIncomeTitle', {
-            year: activeYear,
-            carryover: formatCurrency(startCarryover),
-          })}
-        />
-        <StatTile
-          label={t('dashboard.summary.overallExpenses')}
-          value={formatCurrency(ytdConsumption)}
-          title={t('dashboard.summary.overallExpensesTitle', {
-            amount: formatCurrency(invested),
-          })}
-        />
-        <StatTile
-          label={t('dashboard.summary.avgMonthlyExpenses')}
-          value={formatCurrency(avgConsumption)}
-          title={t('dashboard.summary.avgExpensesTitle', {
+      {/* ── Money snapshot (single flat panel) ──── */}
+      <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+        {/* Hero: earned Gehalt for the year */}
+        <p className="text-sm text-gray-500 dark:text-gray-500">
+          {t('dashboard.summary.earned')}
+        </p>
+        <p
+          className="mt-0.5 text-3xl font-bold tabular-nums text-teal-600 dark:text-teal-400"
+          title={t('dashboard.summary.earnedTitle', {
             count: entries.length,
             year: activeYear,
           })}
-        />
-        <StatTile
-          label={t('dashboard.summary.endOfYearBalance')}
-          value={formatCurrency(currentBalance)}
-          valueClassName={balanceColor(currentBalance)}
-          title={t('dashboard.summary.balanceTitle', { title: latest.title })}
-        />
-      </div>
+        >
+          {formatCurrency(earned)}
+        </p>
 
-      {/* ── Row 2: investing ────────────────────── */}
-      <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3">
-        <StatTile
-          label={t('dashboard.summary.overallInvested')}
-          value={formatCurrency(invested)}
-          valueClassName="text-teal-600 dark:text-teal-400"
-          title={t('dashboard.summary.overallInvestedTitle', {
-            year: activeYear,
-          })}
-        />
-        <StatTile
-          label={t('dashboard.summary.avgMonthlyInvesting')}
-          value={formatCurrency(avgInvested)}
-          title={t('dashboard.summary.avgInvestingTitle', {
-            count: entries.length,
-            year: activeYear,
-          })}
-        />
-        <StatTile
-          label={t('dashboard.summary.investingRate')}
-          value={investingRate === null ? '—' : `${investingRate.toFixed(1)} %`}
-          valueClassName={
-            investingRate === null
-              ? undefined
-              : 'text-teal-600 dark:text-teal-400'
-          }
-          title={t('dashboard.summary.investingRateTitle')}
-        />
+        {/* Money-flow bar: consumption vs. investing share of expenses */}
+        {barVisible && (
+          <div className="mt-5">
+            <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
+              <div
+                style={{ width: `${consumptionPct}%` }}
+                className="bg-gray-300 dark:bg-gray-500"
+                title={t('dashboard.summary.overallExpensesTitle', {
+                  amount: formatCurrency(invested),
+                })}
+              />
+              <div
+                style={{ width: `${investedPct}%` }}
+                className="bg-teal-600 dark:bg-teal-400"
+                title={t('dashboard.summary.overallInvestedTitle', {
+                  year: activeYear,
+                })}
+              />
+            </div>
+            <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1">
+              <LegendItem
+                dotClassName="bg-gray-300 dark:bg-gray-500"
+                label={t('dashboard.summary.bar.consumption')}
+                amount={formatCurrency(ytdConsumption)}
+              />
+              <LegendItem
+                dotClassName="bg-teal-600 dark:bg-teal-400"
+                label={t('dashboard.summary.bar.invested')}
+                amount={formatCurrency(invested)}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Inline stat row — hairline-separated, no boxes */}
+        <div className="mt-5 flex flex-wrap gap-x-10 gap-y-3 border-t border-gray-100 pt-4 dark:border-gray-800">
+          <InlineStat
+            label={t('dashboard.summary.overallIncome')}
+            title={t('dashboard.summary.overallIncomeTitle', {
+              year: activeYear,
+              carryover: formatCurrency(startCarryover),
+            })}
+          >
+            {formatCurrency(ytdIncome)}
+          </InlineStat>
+          <InlineStat
+            label={t('dashboard.summary.overallExpenses')}
+            title={t('dashboard.summary.overallExpensesTitle', {
+              amount: formatCurrency(invested),
+            })}
+          >
+            {formatCurrency(ytdConsumption)}
+          </InlineStat>
+          <InlineStat
+            label={t('dashboard.summary.avgMonthlyExpenses')}
+            title={t('dashboard.summary.avgExpensesTitle', {
+              count: entries.length,
+              year: activeYear,
+            })}
+          >
+            {formatCurrency(avgConsumption)}
+          </InlineStat>
+          <InlineStat
+            label={t('dashboard.summary.overallInvested')}
+            title={t('dashboard.summary.overallInvestedTitle', {
+              year: activeYear,
+            })}
+          >
+            {formatCurrency(invested)}
+            {investingRate !== null && (
+              <span className="ml-1.5 font-normal text-gray-400 dark:text-gray-500">
+                · {investingRate.toFixed(1)} %
+              </span>
+            )}
+          </InlineStat>
+        </div>
       </div>
 
       {/* ── Category spending popup ─────────────── */}

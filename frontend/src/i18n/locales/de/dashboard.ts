@@ -63,15 +63,18 @@ const dashboard = {
       'Durchschnittlicher Verbrauch über {{count}} Budget in {{year}} — ohne Investitionen',
     avgExpensesTitle_other:
       'Durchschnittlicher Verbrauch über {{count}} Budgets in {{year}} — ohne Investitionen',
-    endOfYearBalance: 'Endjahresguthaben',
-    balanceTitle: 'Verbleibendes Guthaben Stand {{title}}',
+    earned: 'Verdient (Netto)',
+    earnedTitle_one:
+      'Summe des IST-Nettos über {{count}} Budget in {{year}}',
+    earnedTitle_other:
+      'Summe des IST-Nettos über {{count}} Budgets in {{year}}',
+    bar: {
+      consumption: 'Verbrauch',
+      invested: 'Investiert',
+    },
     overallInvested: 'Insgesamt investiert',
     overallInvestedTitle:
       'Insgesamt in Investitionen überwiesen (Kategorie Investitionen) in {{year}}',
-    avgMonthlyInvesting: 'Ø Monatsinvestitionen',
-    avgInvestingTitle_one: 'Durchschnitt über {{count}} Budget in {{year}}',
-    avgInvestingTitle_other: 'Durchschnitt über {{count}} Budgets in {{year}}',
-    investingRate: 'Investitionsquote',
     investingRateTitle:
       'Investiert ÷ Gesamteinkommen (neues Geld, ohne Übertrag). Im Durchschnitt in jedem Monat gleich.',
   },
