@@ -9,7 +9,9 @@
  *   summed).
  * - Money-flow bar: how the spent money split into consumption and
  *   investing (leftovers reach investments via the carryover, so
- *   there is no separate "saved" slice).
+ *   there is no separate "saved" slice). Terracotta (brand) = invested
+ *   everywhere (bar segment, legend, stat value) — matching
+ *   SERIES_COLORS.Invested in chartTheme.
  * - Inline stat row: the remaining numbers as quiet label/value pairs
  *   separated by a hairline, not boxed tiles.
  * - Category spending button (top right) opens the per-year modal.
@@ -48,16 +50,22 @@ import { ChartPieIcon } from './Icons';
 function InlineStat({
   label,
   title,
+  valueClassName,
   children,
 }: {
   label: string;
   title?: string;
+  valueClassName?: string;
   children: ReactNode;
 }) {
   return (
     <div title={title}>
       <p className="text-xs text-gray-500 dark:text-gray-500">{label}</p>
-      <p className="mt-0.5 text-sm font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+      <p
+        className={`mt-0.5 text-sm font-semibold tabular-nums ${
+          valueClassName ?? 'text-gray-900 dark:text-gray-100'
+        }`}
+      >
         {children}
       </p>
     </div>
@@ -193,7 +201,7 @@ export function DashboardSummary({ year }: { year: number }) {
               />
               <div
                 style={{ width: `${investedPct}%` }}
-                className="bg-teal-600 dark:bg-teal-400"
+                className="bg-brand-600 dark:bg-brand-400"
                 title={t('dashboard.summary.overallInvestedTitle', { year })}
               />
             </div>
@@ -204,7 +212,7 @@ export function DashboardSummary({ year }: { year: number }) {
                 amount={formatCurrency(ytdConsumption)}
               />
               <LegendItem
-                dotClassName="bg-teal-600 dark:bg-teal-400"
+                dotClassName="bg-brand-600 dark:bg-brand-400"
                 label={t('dashboard.summary.bar.invested')}
                 amount={formatCurrency(invested)}
               />
@@ -243,12 +251,11 @@ export function DashboardSummary({ year }: { year: number }) {
           <InlineStat
             label={t('dashboard.summary.overallInvested')}
             title={t('dashboard.summary.overallInvestedTitle', { year })}
+            valueClassName="text-brand-600 dark:text-brand-400"
           >
             {formatCurrency(invested)}
             {investingRate !== null && (
-              <span className="ml-1.5 font-normal text-gray-400 dark:text-gray-500">
-                · {investingRate.toFixed(1)} %
-              </span>
+              <span className="ml-1.5">· {investingRate.toFixed(1)} %</span>
             )}
           </InlineStat>
         </div>
