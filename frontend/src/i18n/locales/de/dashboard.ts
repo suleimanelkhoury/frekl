@@ -22,8 +22,6 @@ const dashboard = {
     submitting: 'Wird erstellt…',
   },
   archive: {
-    budgetCount_one: '{{count}} Budget',
-    budgetCount_other: '{{count}} Budgets',
     empty:
       'Noch keine Budgets. Erstelle ein neues Budget oder importiere eine Excel-Datei, um loszulegen.',
   },

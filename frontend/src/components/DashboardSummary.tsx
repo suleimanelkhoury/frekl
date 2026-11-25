@@ -1,10 +1,10 @@
 /**
- * DashboardSummary — a single year-overview "money snapshot" above the
- * budget grid, with a year selector so the numbers can be viewed for
- * any year with budgets.
+ * DashboardSummary — the per-year "money snapshot" panel shown inside
+ * each expanded year section on the dashboard (above that year's
+ * budget cards).
  *
  * Layout (one flat panel, hierarchy by size instead of card grids):
- * - Hero: the year's earned Gehalt (Σ actual Gehalt — summing only
+ * - Hero: the year's earned net (Σ actual Gehalt — summing only
  *   Gehalt is safe; Extra is the monthly carryover and must never be
  *   summed).
  * - Money-flow bar: how the spent money split into consumption and
@@ -12,6 +12,7 @@
  *   there is no separate "saved" slice).
  * - Inline stat row: the remaining numbers as quiet label/value pairs
  *   separated by a hairline, not boxed tiles.
+ * - Category spending button (top right) opens the per-year modal.
  *
  * Note on the money model: each month's remaining balance is carried
  * into the next month as its SOLL Extra, so monthly balances and Extra
@@ -21,7 +22,7 @@
  *   - Overall Income = overall expenses + end-of-year balance
  *     − January carryover (new money in = money out + pile growth)
  *
- * Renders nothing while loading or when no budgets exist.
+ * Renders nothing while loading or when the year has no budgets.
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -30,7 +31,7 @@ import { useTranslation } from 'react-i18next';
 import { budgetsApi } from '../api';
 import { formatCurrency, toNumber } from '../utils/format';
 import { queryKeys } from '../utils/queryKeys';
-import { neutralButtonClass, pillButtonClass } from '../utils/ui';
+import { neutralButtonClass } from '../utils/ui';
 import { lazy, Suspense } from 'react';
 // Lazy: the modal is the only reason the dashboard pulls in Recharts
 // (~370 kB chunk). Loading it on first open keeps the initial
@@ -84,11 +85,8 @@ function LegendItem({
   );
 }
 
-export function DashboardSummary() {
+export function DashboardSummary({ year }: { year: number }) {
   const { t } = useTranslation();
-  const currentYear = new Date().getFullYear();
-  // null = automatic: current year if it has budgets, else the newest
-  const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [showCategorySpending, setShowCategorySpending] = useState(false);
 
   const { data: comparison, isLoading: comparisonLoading } = useQuery({
@@ -102,19 +100,10 @@ export function DashboardSummary() {
 
   if (comparisonLoading || yearlyLoading) return null;
 
-  const availableYears = [
-    ...new Set(comparison?.budgets.map((b) => b.year) ?? []),
-  ].sort((a, b) => b - a); // newest first
-  if (availableYears.length === 0) return null;
-
-  const activeYear =
-    selectedYear ??
-    (availableYears.includes(currentYear) ? currentYear : availableYears[0]);
-
-  // Entries are sorted by (year, month) ascending — filter to the
-  // selected year and keep that order.
+  // Entries are sorted by (year, month) ascending — filter to this
+  // year and keep that order.
   const entries: BudgetComparisonEntry[] =
-    comparison?.budgets.filter((b) => b.year === activeYear) ?? [];
+    comparison?.budgets.filter((b) => b.year === year) ?? [];
   if (entries.length === 0) return null;
 
   // ── Raw money-flow sums ─────────────────────
@@ -124,13 +113,12 @@ export function DashboardSummary() {
   );
 
   const latest = entries[entries.length - 1];
-  const currentBalance = toNumber(latest.actual_balance);
 
   // The carryover written into the year's first budget (SOLL Extra) —
   // money earned last year, i.e. not new income this year.
   const startCarryover = toNumber(entries[0].total_projected_extra);
 
-  const ytdSavings = currentBalance - startCarryover;
+  const ytdSavings = toNumber(latest.actual_balance) - startCarryover;
   const ytdIncome = ytdSavings + ytdExpenses;
 
   // ── Earned ──────────────────────────────────
@@ -145,7 +133,7 @@ export function DashboardSummary() {
   // ── Investing ───────────────────────────────
   // invested is already computed per year by the backend (sum of the
   // Investitionen category's actual costs).
-  const yearEntry = yearly?.years.find((y) => y.year === activeYear);
+  const yearEntry = yearly?.years.find((y) => y.year === year);
   const invested = yearEntry ? toNumber(yearEntry.invested) : 0;
   // Share of new income that went into investments. On average this is
   // the same per month, so one rate covers both views.
@@ -162,49 +150,35 @@ export function DashboardSummary() {
   const investedPct = barVisible ? (invested / ytdExpenses) * 100 : 0;
 
   return (
-    <div className="mb-6">
-      {/* ── Year selector + category spending ──── */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        {availableYears.map((year) => (
-          <button
-            key={year}
-            type="button"
-            onClick={() => setSelectedYear(year)}
-            className={pillButtonClass(year === activeYear)}
-          >
-            {year}
-          </button>
-        ))}
-        <span aria-hidden="true" className="text-gray-300 dark:text-gray-600">
-          |
-        </span>
-        <button
-          type="button"
-          onClick={() => setShowCategorySpending(true)}
-          className={`${neutralButtonClass} inline-flex items-center gap-2`}
-          title={t('dashboard.summary.categorySpendingTitle', {
-            year: activeYear,
-          })}
-        >
-          <ChartPieIcon size={14} /> {t('dashboard.summary.categorySpending')}
-        </button>
-      </div>
-
+    <div className="mb-4">
       {/* ── Money snapshot (single flat panel) ──── */}
       <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
-        {/* Hero: earned Gehalt for the year */}
-        <p className="text-sm text-gray-500 dark:text-gray-500">
-          {t('dashboard.summary.earned')}
-        </p>
-        <p
-          className="mt-0.5 text-3xl font-bold tabular-nums text-teal-600 dark:text-teal-400"
-          title={t('dashboard.summary.earnedTitle', {
-            count: entries.length,
-            year: activeYear,
-          })}
-        >
-          {formatCurrency(earned)}
-        </p>
+        {/* Hero + category spending button */}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm text-gray-500 dark:text-gray-500">
+              {t('dashboard.summary.earned')}
+            </p>
+            <p
+              className="mt-0.5 text-3xl font-bold tabular-nums text-teal-600 dark:text-teal-400"
+              title={t('dashboard.summary.earnedTitle', {
+                count: entries.length,
+                year,
+              })}
+            >
+              {formatCurrency(earned)}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowCategorySpending(true)}
+            className={`${neutralButtonClass} inline-flex items-center gap-2`}
+            title={t('dashboard.summary.categorySpendingTitle', { year })}
+          >
+            <ChartPieIcon size={14} />{' '}
+            {t('dashboard.summary.categorySpending')}
+          </button>
+        </div>
 
         {/* Money-flow bar: consumption vs. investing share of expenses */}
         {barVisible && (
@@ -220,9 +194,7 @@ export function DashboardSummary() {
               <div
                 style={{ width: `${investedPct}%` }}
                 className="bg-teal-600 dark:bg-teal-400"
-                title={t('dashboard.summary.overallInvestedTitle', {
-                  year: activeYear,
-                })}
+                title={t('dashboard.summary.overallInvestedTitle', { year })}
               />
             </div>
             <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1">
@@ -245,7 +217,7 @@ export function DashboardSummary() {
           <InlineStat
             label={t('dashboard.summary.overallIncome')}
             title={t('dashboard.summary.overallIncomeTitle', {
-              year: activeYear,
+              year,
               carryover: formatCurrency(startCarryover),
             })}
           >
@@ -263,16 +235,14 @@ export function DashboardSummary() {
             label={t('dashboard.summary.avgMonthlyExpenses')}
             title={t('dashboard.summary.avgExpensesTitle', {
               count: entries.length,
-              year: activeYear,
+              year,
             })}
           >
             {formatCurrency(avgConsumption)}
           </InlineStat>
           <InlineStat
             label={t('dashboard.summary.overallInvested')}
-            title={t('dashboard.summary.overallInvestedTitle', {
-              year: activeYear,
-            })}
+            title={t('dashboard.summary.overallInvestedTitle', { year })}
           >
             {formatCurrency(invested)}
             {investingRate !== null && (
@@ -288,7 +258,7 @@ export function DashboardSummary() {
       {showCategorySpending && (
         <Suspense fallback={null}>
           <CategorySpendingModal
-            year={activeYear}
+            year={year}
             onClose={() => setShowCategorySpending(false)}
           />
         </Suspense>

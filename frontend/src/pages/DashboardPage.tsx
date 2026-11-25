@@ -1,8 +1,10 @@
 /**
  * Dashboard Page — overview of all budgets.
  *
- * Shows a grid of budget cards with quick stats, a button to create a
- * new budget, and a button to import an Excel file.
+ * Year pills select the year; the selected year shows its money
+ * snapshot (summary panel) directly above its budget cards — one
+ * coherent block per year. Includes a button to create a new budget
+ * and a button to import an Excel file.
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -15,7 +17,7 @@ import { DashboardSummary } from '../components/DashboardSummary';
 import { Spinner } from '../components/Spinner';
 import { emptyBudgetDraft } from '../utils/budgetForm';
 import { queryKeys } from '../utils/queryKeys';
-import { neutralButtonClass } from '../utils/ui';
+import { neutralButtonClass, pillButtonClass } from '../utils/ui';
 import { UploadIcon } from '../components/Icons';
 
 // Lazy: SheetJS (xlsx) is ~380 kB and only needed once the user
@@ -33,11 +35,9 @@ export function DashboardPage() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newBudget, setNewBudget] = useState(emptyBudgetDraft);
-  // Collapsed year sections on the dashboard (explicit toggles only;
-  // the default — newest year expanded — is derived at render time).
-  const [collapsedOverrides, setCollapsedOverrides] = useState<
-    Record<number, boolean>
-  >({});
+  // Selected year for the combined summary + cards block (null =
+  // automatic: the current year if it has budgets, else the newest)
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
 
   const { data: budgets, isLoading } = useQuery({
     queryKey: queryKeys.budgets,
@@ -73,31 +73,29 @@ export function DashboardPage() {
     return <Spinner />;
   }
 
+  // ── Year selection ──────────────────────────
+  // Years with budgets, newest first. The current year is the default
+  // when it has budgets, otherwise the newest one.
+  const now = new Date();
+  const years = [...new Set((budgets ?? []).map((b) => b.year))].sort(
+    (a, b) => b - a,
+  );
+  const activeYear =
+    selectedYear ??
+    (years.includes(now.getFullYear()) ? now.getFullYear() : years[0]);
+  const activeBudgets = (budgets ?? [])
+    .filter((b) => b.year === activeYear)
+    .sort((a, b) => b.month - a.month); // newest month first
+
   // ── Current/latest budget ───────────────────
   // This month's budget if one exists, otherwise the most recent one.
   // The backend returns budgets sorted by (year, month) ascending, so
   // the last element is the latest.
-  const now = new Date();
   const currentBudget = budgets
     ? budgets.find(
         (b) => b.month === now.getMonth() + 1 && b.year === now.getFullYear(),
       ) ?? budgets[budgets.length - 1]
     : undefined;
-
-  // ── Year-grouped archive ────────────────────
-  // All budgets grouped by year (newest year first, newest month
-  // first within a year). Sections are collapsible; by default the
-  // newest year is expanded and older years are collapsed. Explicit
-  // toggles win over the default. The current/latest budget appears
-  // in its year section, highlighted.
-  const archiveBudgets = budgets ?? [];
-  const archiveYears = [...new Set(archiveBudgets.map((b) => b.year))].sort(
-    (a, b) => b - a,
-  );
-  const isCollapsed = (year: number) =>
-    collapsedOverrides[year] ?? year !== archiveYears[0];
-  const toggleYear = (year: number) =>
-    setCollapsedOverrides((prev) => ({ ...prev, [year]: !isCollapsed(year) }));
 
   return (
     <div>
@@ -201,55 +199,34 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* ── Year-to-date summary strip ─────────── */}
-      <DashboardSummary />
-
-      {/* ── Budget grid ───────────────────────── */}
-      {archiveBudgets.length > 0 ? (        <div className="space-y-6">
-          {archiveYears.map((year) => {
-            const yearBudgets = archiveBudgets
-              .filter((b) => b.year === year)
-              .sort((a, b) => b.month - a.month); // newest month first
-            const collapsed = isCollapsed(year);
-            return (
-              <section key={year}>
-                <button
-                  type="button"
-                  onClick={() => toggleYear(year)}
-                  aria-expanded={!collapsed}
-                  className="mb-4 flex w-full items-center gap-2 text-left"
-                >
-                <span
-                  className={`text-sm text-gray-500 transition-transform dark:text-gray-400 ${
-                    collapsed ? '' : 'rotate-90'
-                  }`}
-                >
-                  ▶
-                </span>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {year}
-                </h2>
-                <span className="text-sm text-gray-500 dark:text-gray-500">
-                  {t('dashboard.archive.budgetCount', {
-                    count: yearBudgets.length,
-                  })}
-                </span>
+      {/* ── Year pills + combined summary & cards ── */}
+      {years.length > 0 ? (
+        <>
+          <div className="mb-4 flex flex-wrap gap-2">
+            {years.map((year) => (
+              <button
+                key={year}
+                type="button"
+                onClick={() => setSelectedYear(year)}
+                className={pillButtonClass(year === activeYear)}
+              >
+                {year}
               </button>
-              {!collapsed && (
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {yearBudgets.map((budget) => (
-                    <BudgetCard
-                      key={budget.id}
-                      budget={budget}
-                      isCurrent={budget.id === currentBudget?.id}
-                    />
-                  ))}
-                </div>
-              )}
-            </section>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+
+          {/* Year snapshot + this year's cards, one block */}
+          <DashboardSummary year={activeYear} />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {activeBudgets.map((budget) => (
+              <BudgetCard
+                key={budget.id}
+                budget={budget}
+                isCurrent={budget.id === currentBudget?.id}
+              />
+            ))}
+          </div>
+        </>
       ) : (
         <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-12 text-center dark:border-gray-700 dark:bg-gray-800">
           <p className="text-gray-500 dark:text-gray-500">

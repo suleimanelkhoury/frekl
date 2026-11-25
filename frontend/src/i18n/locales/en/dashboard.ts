@@ -19,8 +19,6 @@ const dashboard = {
     submitting: 'Creating…',
   },
   archive: {
-    budgetCount_one: '{{count}} budget',
-    budgetCount_other: '{{count}} budgets',
     empty:
       'No budgets yet. Create a new budget or import from Excel to get started.',
   },
