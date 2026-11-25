@@ -69,8 +69,6 @@ const dashboard = {
     overallInvested: 'Overall Invested',
     overallInvestedTitle:
       'Total transferred into investments (Investitionen category) in {{year}}',
-    investingRateTitle:
-      'Invested ÷ overall income (new money, carryover excluded). On average the same for every month.',
   },
 };
 

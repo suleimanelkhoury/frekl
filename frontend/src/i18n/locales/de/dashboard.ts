@@ -73,8 +73,6 @@ const dashboard = {
     overallInvested: 'Insgesamt investiert',
     overallInvestedTitle:
       'Insgesamt in Investitionen überwiesen (Kategorie Investitionen) in {{year}}',
-    investingRateTitle:
-      'Investiert ÷ Gesamteinkommen (neues Geld, ohne Übertrag). Im Durchschnitt in jedem Monat gleich.',
   },
 };
 

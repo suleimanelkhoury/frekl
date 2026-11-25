@@ -1,7 +1,6 @@
 /**
- * DashboardSummary — the per-year "money snapshot" panel shown inside
- * each expanded year section on the dashboard (above that year's
- * budget cards).
+ * DashboardSummary — the per-year "money snapshot" panel on the
+ * dashboard, shown above the selected year's budget cards.
  *
  * Layout (one flat panel, hierarchy by size instead of card grids):
  * - Hero: the year's earned net (Σ actual Gehalt — summing only
@@ -28,13 +27,15 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
+import { lazy, Suspense, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { budgetsApi } from '../api';
 import { formatCurrency, toNumber } from '../utils/format';
 import { queryKeys } from '../utils/queryKeys';
 import { neutralButtonClass } from '../utils/ui';
-import { lazy, Suspense } from 'react';
+import type { BudgetComparisonEntry } from '../types';
+import { ChartPieIcon } from './Icons';
+
 // Lazy: the modal is the only reason the dashboard pulls in Recharts
 // (~370 kB chunk). Loading it on first open keeps the initial
 // dashboard chunk small.
@@ -43,8 +44,6 @@ const CategorySpendingModal = lazy(() =>
     default: m.CategorySpendingModal,
   })),
 );
-import type { BudgetComparisonEntry } from '../types';
-import { ChartPieIcon } from './Icons';
 
 /** A quiet label/value pair in the inline stat row (no card box). */
 function InlineStat({
@@ -143,8 +142,7 @@ export function DashboardSummary({ year }: { year: number }) {
   // Investitionen category's actual costs).
   const yearEntry = yearly?.years.find((y) => y.year === year);
   const invested = yearEntry ? toNumber(yearEntry.invested) : 0;
-  // Share of new income that went into investments. On average this is
-  // the same per month, so one rate covers both views.
+  // Share of new income that went into investments.
   const investingRate = ytdIncome > 0 ? (invested / ytdIncome) * 100 : null;
 
   // ── Consumption (investments excluded) ──────

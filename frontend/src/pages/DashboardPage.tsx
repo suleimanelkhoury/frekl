@@ -44,12 +44,18 @@ export function DashboardPage() {
     queryFn: budgetsApi.list,
   });
 
+  // Budget creation/import affects every derived view (comparison,
+  // yearly comparison), so all related caches are invalidated together.
+  const invalidateBudgetQueries = () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.budgets });
+    queryClient.invalidateQueries({ queryKey: queryKeys.comparison });
+    queryClient.invalidateQueries({ queryKey: queryKeys.yearlyComparison });
+  };
+
   const createMutation = useMutation({
     mutationFn: budgetsApi.create,
     onSuccess: (budget) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.budgets });
-      queryClient.invalidateQueries({ queryKey: queryKeys.comparison });
-      queryClient.invalidateQueries({ queryKey: queryKeys.yearlyComparison });
+      invalidateBudgetQueries();
       setShowCreateForm(false);
       setNewBudget(emptyBudgetDraft());
       navigate(`/budgets/${budget.id}`);
@@ -62,9 +68,7 @@ export function DashboardPage() {
   };
 
   const handleImportSuccess = (budgetId: number) => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.budgets });
-    queryClient.invalidateQueries({ queryKey: queryKeys.comparison });
-    queryClient.invalidateQueries({ queryKey: queryKeys.yearlyComparison });
+    invalidateBudgetQueries();
     setShowImportModal(false);
     navigate(`/budgets/${budgetId}`);
   };
@@ -235,14 +239,17 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* ── Import modal ──────────────────────── */}
-      <Suspense fallback={null}>
-        <ExcelImportModal
-          isOpen={showImportModal}
-          onClose={() => setShowImportModal(false)}
-          onSuccess={handleImportSuccess}
-        />
-      </Suspense>
+      {/* ── Import modal (mounted only while open, so the xlsx chunk
+             loads on first use) ──────────────────── */}
+      {showImportModal && (
+        <Suspense fallback={null}>
+          <ExcelImportModal
+            isOpen
+            onClose={() => setShowImportModal(false)}
+            onSuccess={handleImportSuccess}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
