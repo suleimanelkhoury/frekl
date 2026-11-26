@@ -27,10 +27,16 @@ export interface Token {
 }
 
 // ── Budget ───────────────────────────────────
+/** How a new budget's SOLL rows are drafted from history (backend
+ * `BudgetCreate.prefill`): blank, the previous budget's plan, or an
+ * average of the last up to three budgets' actual spending. */
+export type PrefillStrategy = 'none' | 'last' | 'average';
+
 export interface BudgetCreate {
   title: string;
   month: number;
   year: number;
+  prefill?: PrefillStrategy;
 }
 
 export interface Budget {

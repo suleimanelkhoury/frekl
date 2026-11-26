@@ -19,6 +19,7 @@ from app.schemas.budget import (
     BudgetDetail,
     BudgetResponse,
     BudgetUpdate,
+    PrefillStrategy,
 )
 from app.schemas.summary import (
     BudgetAnalysisResponse,
@@ -34,6 +35,7 @@ from app.schemas.summary import (
 from app.services.analysis import analyze_user_labels
 from app.services.excel_export import build_budget_excel
 from app.services.ownership import get_user_budget
+from app.services.prefill import create_prefilled_budget
 from app.services.summary import compare_user_budgets, compare_user_by_year
 from app.services.touch import touch_budget
 
@@ -265,17 +267,24 @@ def create_budget(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Budget:
-    """Create a new monthly budget for the logged-in user."""
-    budget = Budget(
-        user_id=current_user.id,
-        title=budget_in.title,
-        month=budget_in.month,
-        year=budget_in.year,
-    )
-    db.add(budget)
-    db.commit()
-    db.refresh(budget)
-    return budget
+    """Create a new monthly budget for the logged-in user.
+
+    With `prefill` set, the budget's SOLL rows are drafted from the
+    user's history (previous budget's plan or an average of recent
+    actual spending) instead of starting blank.
+    """
+    if budget_in.prefill == PrefillStrategy.NONE:
+        budget = Budget(
+            user_id=current_user.id,
+            title=budget_in.title,
+            month=budget_in.month,
+            year=budget_in.year,
+        )
+        db.add(budget)
+        db.commit()
+        db.refresh(budget)
+        return budget
+    return create_prefilled_budget(current_user, budget_in, db)
 
 
 @router.get(

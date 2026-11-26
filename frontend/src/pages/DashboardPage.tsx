@@ -18,6 +18,7 @@ import { Spinner } from '../components/Spinner';
 import { emptyBudgetDraft } from '../utils/budgetForm';
 import { queryKeys } from '../utils/queryKeys';
 import { neutralButtonClass, pillButtonClass } from '../utils/ui';
+import type { PrefillStrategy } from '../types';
 import { UploadIcon } from '../components/Icons';
 
 // Lazy: SheetJS (xlsx) is ~380 kB and only needed once the user
@@ -35,6 +36,11 @@ export function DashboardPage() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newBudget, setNewBudget] = useState(emptyBudgetDraft);
+  // Prefill source for the new budget's SOLL rows ("average" = actual
+  // spending of the last up to three budgets, "last" = previous plan).
+  // Falls back to "none" while no earlier budget exists for the target
+  // month — see hasEarlier below.
+  const [prefill, setPrefill] = useState<PrefillStrategy>('average');
   // Selected year for the combined summary + cards block (null =
   // automatic: the current year if it has budgets, else the newest)
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
@@ -64,7 +70,7 @@ export function DashboardPage() {
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate(newBudget);
+    createMutation.mutate({ ...newBudget, prefill: effectivePrefill });
   };
 
   const handleImportSuccess = (budgetId: number) => {
@@ -90,6 +96,16 @@ export function DashboardPage() {
   const activeBudgets = (budgets ?? [])
     .filter((b) => b.year === activeYear)
     .sort((a, b) => b.month - a.month); // newest month first
+
+  // ── Prefill availability ────────────────────
+  // The create form can draft SOLL rows from history only if some
+  // budget exists strictly before the target month/year.
+  const hasEarlier = (budgets ?? []).some(
+    (b) =>
+      b.year < newBudget.year ||
+      (b.year === newBudget.year && b.month < newBudget.month),
+  );
+  const effectivePrefill: PrefillStrategy = hasEarlier ? prefill : 'none';
 
   // ── Current/latest budget ───────────────────
   // This month's budget if one exists, otherwise the most recent one.
@@ -181,6 +197,24 @@ export function DashboardPage() {
                 className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
               />
             </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t('dashboard.create.prefillLabel')}
+              </label>
+              <select
+                value={effectivePrefill}
+                onChange={(e) => setPrefill(e.target.value as PrefillStrategy)}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              >
+                <option value="average" disabled={!hasEarlier}>
+                  {t('dashboard.create.prefillAverage')}
+                </option>
+                <option value="last" disabled={!hasEarlier}>
+                  {t('dashboard.create.prefillLast')}
+                </option>
+                <option value="none">{t('dashboard.create.prefillNone')}</option>
+              </select>
+            </div>
             <div className="flex items-end gap-2">
               <button
                 type="submit"
@@ -199,6 +233,11 @@ export function DashboardPage() {
                 {t('common.actions.cancel')}
               </button>
             </div>
+            <p className="w-full text-xs text-gray-500 dark:text-gray-500">
+              {hasEarlier
+                ? t('dashboard.create.prefillHint')
+                : t('dashboard.create.prefillUnavailable')}
+            </p>
           </form>
         </div>
       )}

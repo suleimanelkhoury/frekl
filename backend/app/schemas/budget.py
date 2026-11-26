@@ -1,6 +1,7 @@
 """Pydantic schemas for Budget — create, update, response, and detail (nested)."""
 
 from datetime import UTC, datetime
+from enum import Enum
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -8,6 +9,20 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 if TYPE_CHECKING:
     from app.schemas.category import CategoryResponse
     from app.schemas.income import IncomeResponse
+
+
+class PrefillStrategy(str, Enum):
+    """How a new budget's projected (SOLL) rows are filled from history.
+
+    Sent with POST /api/budgets; see app/services/prefill.py for the
+    drafting rules. "last" copies the previous budget's plan (with the
+    correct Extra carryover), "average" plans from the actual spending
+    of the last up to three budgets.
+    """
+
+    NONE = "none"
+    LAST = "last"
+    AVERAGE = "average"
 
 
 class BudgetBase(BaseModel):
@@ -28,7 +43,15 @@ class BudgetBase(BaseModel):
 class BudgetCreate(BudgetBase):
     """Request body for creating a budget."""
 
-    pass
+    prefill: PrefillStrategy = Field(
+        default=PrefillStrategy.NONE,
+        description=(
+            "How to draft the new budget's SOLL rows from history: "
+            "none (blank), last (previous budget's plan), or average "
+            "(recurring rows' actual spending over the last up to "
+            "three budgets)."
+        ),
+    )
 
 
 class BudgetUpdate(BaseModel):

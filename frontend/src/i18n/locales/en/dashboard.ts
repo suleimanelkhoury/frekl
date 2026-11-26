@@ -15,6 +15,13 @@ const dashboard = {
     titlePlaceholder: 'e.g. July 2026',
     monthLabel: 'Month',
     yearLabel: 'Year',
+    prefillLabel: 'Prefill',
+    prefillAverage: 'Avg. of last 3 months (recurring)',
+    prefillLast: "Last month's plan",
+    prefillNone: 'Empty',
+    prefillHint:
+      'Projected rows are drafted from your history: the average plans recurring rows (present in every recent month) at their average actual spending; last month copies the previous plan. Extra always starts with the previous month\'s balance; actual amounts start at zero.',
+    prefillUnavailable: 'No earlier budgets yet — the budget starts blank.',
     submit: 'Create',
     submitting: 'Creating…',
   },

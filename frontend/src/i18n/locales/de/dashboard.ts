@@ -18,6 +18,13 @@ const dashboard = {
     titlePlaceholder: 'z. B. Juli 2026',
     monthLabel: 'Monat',
     yearLabel: 'Jahr',
+    prefillLabel: 'Vorbelegung',
+    prefillAverage: 'Ø letzte 3 Monate (wiederkehrend)',
+    prefillLast: 'Plan des Vormonats',
+    prefillNone: 'Leer',
+    prefillHint:
+      'SOLL-Zeilen werden aus deiner Historie entworfen: Ø plant wiederkehrende Posten (in jedem der letzten Monate vorhanden) mit ihren durchschnittlichen Ist-Ausgaben; Vormonat übernimmt den letzten Plan. Extra startet immer mit dem Guthaben des Vormonats; Ist-Beträge beginnen bei null.',
+    prefillUnavailable: 'Noch keine früheren Budgets – das Budget startet leer.',
     submit: 'Erstellen',
     submitting: 'Wird erstellt…',
   },
