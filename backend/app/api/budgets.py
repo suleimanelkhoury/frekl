@@ -28,6 +28,7 @@ from app.schemas.summary import (
     ChartDataPoint,
     ItemHistoryEntry,
     ItemHistoryResponse,
+    RecurringResponse,
     TopItem,
     TopItemsResponse,
     YearlyComparison,
@@ -36,6 +37,7 @@ from app.services.analysis import analyze_user_labels
 from app.services.excel_export import build_budget_excel
 from app.services.ownership import get_user_budget
 from app.services.prefill import create_prefilled_budget
+from app.services.recurring import recurring_user_items
 from app.services.summary import compare_user_budgets, compare_user_by_year
 from app.services.touch import touch_budget
 
@@ -254,6 +256,28 @@ def analysis(
     button.
     """
     return analyze_user_labels(current_user)
+
+
+@router.get(
+    "/recurring",
+    response_model=RecurringResponse,
+    summary="Recurring expense rows aggregated across all budgets",
+)
+def recurring_items(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> RecurringResponse:
+    """Aggregate every recurring expense row across ALL budgets.
+
+    Rows are grouped case-insensitively and count as recurring only
+    when they appear at a regular interval (monthly, quarterly, …);
+    random appearances don't qualify. Each row carries its average
+    actual cost, detected cadence, first/last appearance, and a price
+    trend (earliest entries vs. latest entries) that reveals
+    subscriptions quietly getting more expensive. Sorted by total
+    actual spending.
+    """
+    return recurring_user_items(current_user)
 
 
 @router.post(

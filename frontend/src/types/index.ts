@@ -207,6 +207,30 @@ export interface BudgetAnalysisResponse {
   similar: SimilarNameGroup[];
 }
 
+// ── Recurring items (subscriptions, all budgets) ──
+export interface RecurringItem {
+  label: string; // most recent spelling
+  category: string; // most recent category spelling
+  occurrences: number;
+  budget_count: number;
+  first_month: number;
+  first_year: number;
+  last_month: number;
+  last_year: number;
+  total_actual: string;
+  avg_actual: string;
+  /** Detected interval in months: 1 = monthly, 3 = quarterly, … */
+  cadence_months: number;
+  early_avg: string | null;
+  late_avg: string | null;
+  direction: 'up' | 'down' | 'flat' | null;
+  change_pct: number | null;
+}
+
+export interface RecurringResponse {
+  items: RecurringItem[];
+}
+
 // ── Multi-month Comparison ───────────────────
 export interface BudgetComparisonEntry {
   budget_id: number;

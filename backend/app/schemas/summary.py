@@ -209,3 +209,43 @@ class YearlyComparison(BaseModel):
     """Comparison of a user's budgets aggregated by year."""
 
     years: list[YearlyComparisonEntry]
+
+
+class RecurringItem(BaseModel):
+    """One recurring expense row aggregated across all budgets.
+
+    A row counts as recurring when it appears at a REGULAR cadence —
+    gaps between occurrence months must be consistent (monthly, every
+    three months like GEZ, yearly); random appearances don't qualify
+    (see app/services/recurring.py). Trend compares the average actual
+    cost of the earliest entries against the latest entries — direction
+    is "up" (recently pricier), "down", or "flat"; None when the row
+    has fewer than two entries.
+    """
+
+    label: str  # most recent spelling
+    category: str  # most recent category spelling
+    occurrences: int  # total row entries across all budgets
+    budget_count: int  # distinct budgets (months) the row appears in
+    first_month: int
+    first_year: int
+    last_month: int
+    last_year: int
+    total_actual: Decimal
+    # Average actual cost per entry (per bill, not per month)
+    avg_actual: Decimal
+    # Detected interval in months: 1 = monthly, 3 = quarterly, …
+    cadence_months: int
+    # Trend: averages of the earliest/latest half of the entries
+    # (middle entry skipped when the count is odd); None below 2 entries
+    early_avg: Decimal | None = None
+    late_avg: Decimal | None = None
+    direction: str | None = None  # "up" | "down" | "flat"
+    # Relative change between the two halves, in percent
+    change_pct: float | None = None
+
+
+class RecurringResponse(BaseModel):
+    """All recurring rows of a user, sorted by total actual spending."""
+
+    items: list[RecurringItem] = []

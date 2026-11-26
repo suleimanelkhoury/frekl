@@ -22,6 +22,7 @@ export const queryKeys = {
   topItems: ['top-items'] as const,
   itemHistory: (label: string) => ['item-history', label] as const,
   analysis: ['budget-analysis'] as const,
+  recurring: ['recurring-items'] as const,
 };
 
 /**

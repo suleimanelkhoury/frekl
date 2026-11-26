@@ -33,6 +33,27 @@ const settings = {
       ist: 'IST',
     },
   },
+  subscriptions: {
+    title: 'Subscriptions & Recurring',
+    hint: 'Rows recurring at a regular interval (monthly, quarterly, yearly …), with their average actual cost and a price trend (earliest entries vs. latest entries). Click a row for its full history.',
+    open: 'Open Subscriptions',
+    empty: 'No recurring rows yet.',
+    columns: {
+      label: 'Item',
+      category: 'Category',
+      seen: 'Seen',
+      period: 'Period',
+      avg: 'Ø Actual',
+      trend: 'Trend',
+    },
+    seen_one: '{{count}}× in {{budgets}} months',
+    seen_other: '{{count}}× in {{budgets}} months',
+    cadenceMonthly: 'monthly',
+    cadenceEvery: 'every {{months}} months',
+    trend: {
+      hint: 'Average of the earliest entries vs. the latest entries',
+    },
+  },
   changePassword: {
     title: 'Change Password',
     placeholder:

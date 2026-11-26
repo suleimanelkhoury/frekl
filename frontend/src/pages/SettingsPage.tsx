@@ -4,8 +4,9 @@
  *
  * Shows the current user's email and account creation date, the
  * language switcher, a budget-analysis launcher (one-time rows and
- * near-duplicate row names), and a logout button. (Password change is
- * a placeholder for now.)
+ * near-duplicate row names), a subscriptions overview (recurring rows
+ * with price trends), and a logout button. (Password change is a
+ * placeholder for now.)
  */
 
 import { useState } from 'react';
@@ -14,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { BudgetAnalysisModal } from '../components/BudgetAnalysisModal';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { RecurringItemsModal } from '../components/RecurringItemsModal';
 import { formatDate } from '../utils/format';
 import { neutralButtonClass } from '../utils/ui';
 
@@ -22,6 +24,7 @@ export function SettingsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [analysisOpen, setAnalysisOpen] = useState(false);
+  const [subscriptionsOpen, setSubscriptionsOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -92,6 +95,25 @@ export function SettingsPage() {
 
       <hr className="mb-8 border-gray-200 dark:border-gray-700" />
 
+      {/* ── Subscriptions / recurring items ───── */}
+      <section className="mb-8">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+          {t('settings.subscriptions.title')}
+        </h2>
+        <p className="mb-4 text-sm text-gray-500 dark:text-gray-500">
+          {t('settings.subscriptions.hint')}
+        </p>
+        <button
+          type="button"
+          onClick={() => setSubscriptionsOpen(true)}
+          className={neutralButtonClass}
+        >
+          {t('settings.subscriptions.open')}
+        </button>
+      </section>
+
+      <hr className="mb-8 border-gray-200 dark:border-gray-700" />
+
       {/* ── Change password (placeholder) ─────── */}
       <section className="mb-8">
         <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
@@ -123,6 +145,11 @@ export function SettingsPage() {
       {/* ── Budget analysis modal ─────────────── */}
       {analysisOpen && (
         <BudgetAnalysisModal onClose={() => setAnalysisOpen(false)} />
+      )}
+
+      {/* ── Subscriptions modal ───────────────── */}
+      {subscriptionsOpen && (
+        <RecurringItemsModal onClose={() => setSubscriptionsOpen(false)} />
       )}
     </div>
   );

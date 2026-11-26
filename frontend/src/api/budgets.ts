@@ -15,6 +15,7 @@ import type {
   ExcelImportResponse,
   BudgetAnalysisResponse,
   ItemHistoryResponse,
+  RecurringResponse,
   TopItemsResponse,
   YearlyComparison,
 } from '../types';
@@ -93,6 +94,12 @@ export const budgetsApi = {
   /** One-time rows and rows with very similar names, all budgets. */
   getAnalysis: async (): Promise<BudgetAnalysisResponse> => {
     const response = await api.get<BudgetAnalysisResponse>('/budgets/analysis');
+    return response.data;
+  },
+
+  /** Recurring rows aggregated across all budgets (subscriptions). */
+  getRecurring: async (): Promise<RecurringResponse> => {
+    const response = await api.get<RecurringResponse>('/budgets/recurring');
     return response.data;
   },
 

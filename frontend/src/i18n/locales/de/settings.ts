@@ -33,6 +33,27 @@ const settings = {
       ist: 'IST',
     },
   },
+  subscriptions: {
+    title: 'Abos & Wiederkehrendes',
+    hint: 'Zeilen in regelmäßigen Abständen (monatlich, quartalsweise, jährlich …), mit ihren durchschnittlichen Ist-Kosten und einem Preistrend (früheste Einträge vs. letzte Einträge). Klicke auf eine Zeile für den kompletten Verlauf.',
+    open: 'Abos öffnen',
+    empty: 'Noch keine wiederkehrenden Zeilen.',
+    columns: {
+      label: 'Zeile',
+      category: 'Kategorie',
+      seen: 'Vorkommen',
+      period: 'Zeitraum',
+      avg: 'Ø Ist',
+      trend: 'Trend',
+    },
+    seen_one: '{{count}}× in {{budgets}} Monat',
+    seen_other: '{{count}}× in {{budgets}} Monaten',
+    cadenceMonthly: 'monatlich',
+    cadenceEvery: 'alle {{months}} Monate',
+    trend: {
+      hint: 'Durchschnitt der frühesten Einträge vs. der letzten Einträge',
+    },
+  },
   changePassword: {
     title: 'Passwort ändern',
     placeholder:
