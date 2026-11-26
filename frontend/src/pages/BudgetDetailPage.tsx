@@ -230,7 +230,7 @@ export function BudgetDetailPage() {
           {/* ── Delete budget ─────────────────────── */}
           <button
             onClick={() => setShowDeleteConfirm(true)}
-            className="rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:bg-gray-800 dark:text-red-400 dark:hover:bg-red-950"
+            className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:bg-gray-800 dark:text-red-400 dark:hover:bg-red-950"
             title={t('detail.page.deleteTooltip')}
           >
             <Trash2Icon size={14} /> {t('detail.page.deleteButton')}
