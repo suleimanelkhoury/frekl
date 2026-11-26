@@ -22,6 +22,13 @@ const common = {
   states: {
     loading: 'Wird geladen…',
   },
+  search: {
+    placeholder: 'Budgets, Kategorien, Posten durchsuchen…',
+    budgets: 'Budgets',
+    categories: 'Kategorien',
+    items: 'Posten',
+    noResults: 'Keine Ergebnisse.',
+  },
   errors: {
     generic: 'Etwas ist schiefgelaufen. Bitte versuche es erneut.',
     incorrectCredentials: 'E-Mail oder Passwort ist falsch.',

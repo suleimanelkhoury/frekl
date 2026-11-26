@@ -7,11 +7,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import (
     auth_router,
+    backup_router,
     budgets_router,
     categories_router,
     excel_import_router,
     expense_items_router,
     income_router,
+    search_router,
     summary_router,
 )
 from app.core.config import settings, validate_security_settings
@@ -67,11 +69,13 @@ logger.info("app_initialized", app_name=settings.APP_NAME, version=settings.APP_
 
 # ── Routers ──────────────────────────────────
 app.include_router(auth_router)
+app.include_router(backup_router)
 app.include_router(budgets_router)
 app.include_router(income_router)
 app.include_router(categories_router)
 app.include_router(expense_items_router)
 app.include_router(summary_router)
+app.include_router(search_router)
 app.include_router(excel_import_router)
 
 

@@ -254,6 +254,35 @@ export interface InvestmentsResponse {
   total: string;
 }
 
+// ── Backup / restore ─────────────────────────
+export type RestoreMode = 'merge' | 'replace';
+
+export interface RestoreResponse {
+  created: number;
+  skipped: number;
+}
+
+// ── Global search ────────────────────────────
+export interface SearchHit {
+  budget_id: number;
+  budget_title: string;
+  month: number;
+  year: number;
+  /** The matched text: budget title / category name / item label. */
+  label: string;
+  /** Set for item hits: the category the item lives in. */
+  category: string | null;
+  /** Distinct budgets containing the name (global aggregation). */
+  occurrences: number;
+}
+
+export interface SearchResponse {
+  query: string;
+  budgets: SearchHit[];
+  categories: SearchHit[];
+  items: SearchHit[];
+}
+
 // ── Multi-month Comparison ───────────────────
 export interface BudgetComparisonEntry {
   budget_id: number;

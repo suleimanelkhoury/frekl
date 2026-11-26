@@ -3,14 +3,17 @@
  * across all budgets ("all the Ausgaben ever").
  *
  * Opened by clicking a bar in the top-expenses chart on the Charts
- * page's Overall tab. Fetches the backend's item-history endpoint,
- * which applies the same case-insensitive label aggregation as the
- * top-items ranking; entries are chronological with per-entry
- * SOLL/IST/difference and the summed totals.
+ * page's Overall tab, a row in the subscriptions or investments
+ * tables, or a hit in the global search. Fetches the backend's
+ * item-history endpoint, which applies the same case-insensitive label
+ * aggregation as the top-items ranking; entries are chronological with
+ * per-entry SOLL/IST/difference and the summed totals. Clicking an
+ * entry navigates to that entry's budget detail page.
  */
 
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { budgetsApi } from '../api';
 import { Modal } from './Modal';
 import { Spinner } from './Spinner';
@@ -29,6 +32,7 @@ export function ExpenseHistoryModal({
   onClose,
 }: ExpenseHistoryModalProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const { data, isLoading } = useQuery({
     queryKey: queryKeys.itemHistory(label),
@@ -54,7 +58,8 @@ export function ExpenseHistoryModal({
       ) : (
         <>
           <p className="mb-3 text-xs text-gray-400 dark:text-gray-500">
-            {t('charts.history.entries', { count: data.entries.length })}
+            {t('charts.history.entries', { count: data.entries.length })} ·{' '}
+            {t('charts.history.openHint')}
           </p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -81,7 +86,12 @@ export function ExpenseHistoryModal({
                 {data.entries.map((entry, index) => (
                   <tr
                     key={`hist-${index}`}
-                    className="border-b border-gray-100 dark:border-gray-800"
+                    onClick={() => {
+                      onClose();
+                      navigate(`/budgets/${entry.budget_id}`);
+                    }}
+                    title={t('charts.history.openBudget')}
+                    className="cursor-pointer border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-700/50"
                   >
                     <td className="py-2 pr-4 text-gray-900 dark:text-gray-100">
                       {formatMonthYear(entry.month, entry.year)}

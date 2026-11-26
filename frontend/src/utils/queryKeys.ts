@@ -24,6 +24,7 @@ export const queryKeys = {
   analysis: ['budget-analysis'] as const,
   recurring: ['recurring-items'] as const,
   investments: ['investments'] as const,
+  search: (query: string) => ['search', query] as const,
 };
 
 /**

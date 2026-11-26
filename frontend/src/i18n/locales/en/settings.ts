@@ -59,6 +59,31 @@ const settings = {
     placeholder:
       'Password change functionality will be available in a future update.',
   },
+  backup: {
+    title: 'Backup & Restore',
+    hint: 'Download all your budgets as a JSON file, or restore from a backup. The backup contains everything (income, categories, items with SOLL/IST) but no password.',
+    download: 'Download Backup',
+    downloading: 'Downloading…',
+    downloadError: 'Could not create the backup. Please try again.',
+    restore: 'Restore Backup',
+    modal: {
+      title: 'Restore from Backup',
+      fileLabel: 'Backup file (.json)',
+      fileError: 'Not a valid frekl backup file.',
+      summary:
+        'Backup from {{date}} · {{email}} · {{budgets}} budgets',
+      modeLabel: 'Restore mode',
+      modeMerge: 'Merge (fills missing months, keeps existing)',
+      modeReplace: 'Replace everything (deletes all current budgets!)',
+      replaceWarning:
+        'Replace mode permanently deletes ALL your current budgets. There is no undo — make sure you downloaded a backup first.',
+      restore: 'Restore',
+      restoring: 'Restoring…',
+      result: 'Restored {{created}} budgets, skipped {{skipped}}.',
+      close: 'Close',
+      error: 'Restore failed. Please check the file and try again.',
+    },
+  },
   logout: {
     title: 'Logout',
     hint: 'Log out of your account on this device.',

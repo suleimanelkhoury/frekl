@@ -59,6 +59,30 @@ const settings = {
     placeholder:
       'Die Passwort-Änderung wird in einem zukünftigen Update verfügbar sein.',
   },
+  backup: {
+    title: 'Backup & Wiederherstellung',
+    hint: 'Lade alle deine Budgets als JSON-Datei herunter oder stelle ein Backup wieder her. Das Backup enthält alles (Einkommen, Kategorien, Posten mit SOLL/IST), aber kein Passwort.',
+    download: 'Backup herunterladen',
+    downloading: 'Wird heruntergeladen…',
+    downloadError: 'Backup konnte nicht erstellt werden. Bitte versuche es erneut.',
+    restore: 'Backup wiederherstellen',
+    modal: {
+      title: 'Aus Backup wiederherstellen',
+      fileLabel: 'Backup-Datei (.json)',
+      fileError: 'Keine gültige frekl-Backup-Datei.',
+      summary: 'Backup vom {{date}} · {{email}} · {{budgets}} Budgets',
+      modeLabel: 'Wiederherstellungs-Modus',
+      modeMerge: 'Zusammenführen (füllt fehlende Monate, behält vorhandene)',
+      modeReplace: 'Alles ersetzen (löscht alle aktuellen Budgets!)',
+      replaceWarning:
+        'Der Ersetzen-Modus löscht dauerhaft ALLE deine aktuellen Budgets. Es gibt kein Zurück — lade vorher sicherheitshalber ein Backup herunter.',
+      restore: 'Wiederherstellen',
+      restoring: 'Wird wiederhergestellt…',
+      result: '{{created}} Budgets wiederhergestellt, {{skipped}} übersprungen.',
+      close: 'Schließen',
+      error: 'Wiederherstellung fehlgeschlagen. Bitte prüfe die Datei und versuche es erneut.',
+    },
+  },
   logout: {
     title: 'Abmelden',
     hint: 'Melde dich auf diesem Gerät von deinem Konto ab.',

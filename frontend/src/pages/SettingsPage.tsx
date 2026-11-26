@@ -5,7 +5,8 @@
  * Shows the current user's email and account creation date, the
  * language switcher, a budget-analysis launcher (one-time rows and
  * near-duplicate row names), a subscriptions overview (recurring rows
- * with price trends), and a logout button. (Password change is a
+ * with price trends), a backup/restore section (JSON export + restore
+ * with merge/replace), and a logout button. (Password change is a
  * placeholder for now.)
  */
 
@@ -13,9 +14,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
+import { backupApi } from '../api';
 import { BudgetAnalysisModal } from '../components/BudgetAnalysisModal';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { RecurringItemsModal } from '../components/RecurringItemsModal';
+import { RestoreBackupModal } from '../components/RestoreBackupModal';
 import { formatDate } from '../utils/format';
 import { neutralButtonClass } from '../utils/ui';
 
@@ -25,6 +28,21 @@ export function SettingsPage() {
   const navigate = useNavigate();
   const [analysisOpen, setAnalysisOpen] = useState(false);
   const [subscriptionsOpen, setSubscriptionsOpen] = useState(false);
+  const [restoreOpen, setRestoreOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState(false);
+
+  const handleDownloadBackup = async () => {
+    setDownloading(true);
+    setDownloadError(false);
+    try {
+      await backupApi.download();
+    } catch {
+      setDownloadError(true);
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -114,6 +132,42 @@ export function SettingsPage() {
 
       <hr className="mb-8 border-gray-200 dark:border-gray-700" />
 
+      {/* ── Backup & restore ──────────────────── */}
+      <section className="mb-8">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+          {t('settings.backup.title')}
+        </h2>
+        <p className="mb-4 text-sm text-gray-500 dark:text-gray-500">
+          {t('settings.backup.hint')}
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={handleDownloadBackup}
+            disabled={downloading}
+            className={neutralButtonClass}
+          >
+            {downloading
+              ? t('settings.backup.downloading')
+              : t('settings.backup.download')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setRestoreOpen(true)}
+            className={neutralButtonClass}
+          >
+            {t('settings.backup.restore')}
+          </button>
+        </div>
+        {downloadError && (
+          <p className="mt-2 text-xs text-red-600 dark:text-red-400">
+            {t('settings.backup.downloadError')}
+          </p>
+        )}
+      </section>
+
+      <hr className="mb-8 border-gray-200 dark:border-gray-700" />
+
       {/* ── Change password (placeholder) ─────── */}
       <section className="mb-8">
         <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
@@ -150,6 +204,11 @@ export function SettingsPage() {
       {/* ── Subscriptions modal ───────────────── */}
       {subscriptionsOpen && (
         <RecurringItemsModal onClose={() => setSubscriptionsOpen(false)} />
+      )}
+
+      {/* ── Restore backup modal ──────────────── */}
+      {restoreOpen && (
+        <RestoreBackupModal onClose={() => setRestoreOpen(false)} />
       )}
     </div>
   );

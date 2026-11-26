@@ -23,6 +23,7 @@ import {
   XIcon,
 } from './Icons';
 import { LogoMark } from './Logo';
+import { GlobalSearch } from './GlobalSearch';
 
 const navItems = [
   { to: '/', labelKey: 'nav.dashboard', icon: LayoutDashboardIcon },
@@ -105,6 +106,8 @@ export function Layout() {
           >
             <MenuIcon size={20} />
           </button>
+          {/* ── Global search ─────────────────── */}
+          <GlobalSearch />
           <div className="flex items-center gap-4">
             {/* ── Dark mode toggle ─────────────── */}
             <button

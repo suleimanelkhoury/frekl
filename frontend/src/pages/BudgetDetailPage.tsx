@@ -19,7 +19,7 @@ import { SummaryBar } from '../components/SummaryBar';
 import { invalidateBudgetData, queryKeys } from '../utils/queryKeys';
 import { neutralButtonClass } from '../utils/ui';
 import type { Category } from '../types';
-import { CalendarDaysIcon, DownloadIcon, SearchIcon, Trash2Icon, XIcon } from '../components/Icons';
+import { CalendarDaysIcon, DownloadIcon, Trash2Icon } from '../components/Icons';
 
 export function BudgetDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -35,7 +35,6 @@ export function BudgetDetailPage() {
     projected_amount: '0',
     actual_amount: '0',
   });
-  const [searchQuery, setSearchQuery] = useState('');
   const [draggedCategoryId, setDraggedCategoryId] = useState<number | null>(
     null,
   );
@@ -167,27 +166,6 @@ export function BudgetDetailPage() {
     );
   }
 
-  // ── Filter data based on search ────────────
-  const query = searchQuery.toLowerCase().trim();
-  const filteredIncomes = query
-    ? budget.incomes.filter((i) => i.label.toLowerCase().includes(query))
-    : budget.incomes;
-  const filteredCategories = query
-    ? budget.categories
-        .map((cat) => ({
-          ...cat,
-          items: cat.items.filter(
-            (item) =>
-              item.label.toLowerCase().includes(query) ||
-              cat.name.toLowerCase().includes(query),
-          ),
-        }))
-        .filter(
-          (cat) =>
-            cat.name.toLowerCase().includes(query) || cat.items.length > 0,
-        )
-    : budget.categories;
-
   return (
     <div className="pb-24">
       {/* ── Header ─────────────────────────────── */}
@@ -235,27 +213,6 @@ export function BudgetDetailPage() {
           >
             <Trash2Icon size={14} /> {t('detail.page.deleteButton')}
           </button>
-          {/* ── Search bar ─────────────────────────── */}
-          <div className="relative">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t('detail.page.searchPlaceholder')}
-              className="w-48 rounded-lg border border-gray-300 py-2 pl-9 pr-3 text-sm focus:border-brand-500 focus:outline-none sm:w-64 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
-            />
-            <span className="absolute left-3 top-2.5 text-gray-400 dark:text-gray-500">
-              <SearchIcon size={16} />
-            </span>
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2 top-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-              >
-                <XIcon size={14} />
-              </button>
-            )}
-          </div>
         </div>
       </div>
 
@@ -354,7 +311,7 @@ export function BudgetDetailPage() {
             </button>
           </form>
         )}
-        <IncomeTable budgetId={budgetId} incomes={filteredIncomes} />
+        <IncomeTable budgetId={budgetId} incomes={budget.incomes} />
       </div>
 
       {/* ── Categories ─────────────────────────── */}
@@ -397,10 +354,10 @@ export function BudgetDetailPage() {
             </button>
           </form>
         )}
-        {filteredCategories.map((category) => (
+        {budget.categories.map((category) => (
           <div
             key={category.id}
-            draggable={!searchQuery}
+            draggable
             onDragStart={() => handleDragStart(category.id)}
             onDragOver={handleDragOver}
             onDrop={() => handleDrop(category.id)}
@@ -411,12 +368,10 @@ export function BudgetDetailPage() {
             <CategorySection category={category} budgetId={budgetId} />
           </div>
         ))}
-        {filteredCategories.length === 0 && (
+        {budget.categories.length === 0 && (
           <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center dark:border-gray-700 dark:bg-gray-800">
             <p className="text-gray-500 dark:text-gray-500">
-              {searchQuery
-                ? t('detail.page.noSearchResults', { query: searchQuery })
-                : t('detail.page.noCategories')}
+              {t('detail.page.noCategories')}
             </p>
           </div>
         )}

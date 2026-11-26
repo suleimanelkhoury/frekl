@@ -63,6 +63,8 @@ const charts = {
     actual: 'IST',
     difference: 'Differenz',
     total: 'Gesamt',
+    openHint: 'Klicke auf einen Eintrag, um das Budget zu öffnen.',
+    openBudget: 'Dieses Budget öffnen',
     entries_one: '{{count}} Eintrag',
     entries_other: '{{count}} Einträge',
   },

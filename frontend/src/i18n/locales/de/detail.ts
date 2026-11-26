@@ -19,7 +19,6 @@ const detail = {
       'Dieses Budget in eine Excel-Datei exportieren (gleiches Format wie die Importvorlage)',
     deleteButton: 'Löschen',
     deleteTooltip: 'Dieses Budget und alle zugehörigen Daten löschen',
-    searchPlaceholder: 'Posten suchen…',
     deleteDialogTitle: 'Budget löschen',
     deleteConfirmMessage:
       'Bist du sicher, dass du <strong>{{title}}</strong> löschen möchtest? Dadurch werden alle Kategorien, Ausgabenposten und Einnahmen endgültig entfernt. Diese Aktion kann nicht rückgängig gemacht werden.',
@@ -32,7 +31,6 @@ const detail = {
     categoriesHeading: 'Kategorien',
     addCategory: '+ Kategorie hinzufügen',
     categoryNamePlaceholder: 'Name der Kategorie (z. B. Wohnen)',
-    noSearchResults: 'Keine Posten gefunden, die „{{query}}“ entsprechen.',
     noCategories:
       'Noch keine Kategorien. Füge eine Kategorie hinzu, um Ausgaben zu erfassen.',
   },

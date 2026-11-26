@@ -16,7 +16,6 @@ const detail = {
       'Export this budget to an Excel file (same format as the import template)',
     deleteButton: 'Delete',
     deleteTooltip: 'Delete this budget and all its data',
-    searchPlaceholder: 'Search items…',
     deleteDialogTitle: 'Delete Budget',
     deleteConfirmMessage:
       'Are you sure you want to delete <strong>{{title}}</strong>? This will permanently remove all categories, expense items, and income entries. This action cannot be undone.',
@@ -28,7 +27,6 @@ const detail = {
     categoriesHeading: 'Categories',
     addCategory: '+ Add Category',
     categoryNamePlaceholder: 'Category name (e.g. Housing)',
-    noSearchResults: 'No items found matching "{{query}}".',
     noCategories:
       'No categories yet. Add a category to start tracking expenses.',
   },

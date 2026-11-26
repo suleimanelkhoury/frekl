@@ -20,6 +20,13 @@ const common = {
   states: {
     loading: 'Loading…',
   },
+  search: {
+    placeholder: 'Search budgets, categories, items…',
+    budgets: 'Budgets',
+    categories: 'Categories',
+    items: 'Items',
+    noResults: 'No results.',
+  },
   errors: {
     generic: 'Something went wrong. Please try again.',
     incorrectCredentials: 'Incorrect email or password.',
