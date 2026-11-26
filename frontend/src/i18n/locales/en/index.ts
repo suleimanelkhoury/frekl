@@ -14,6 +14,7 @@ import calculator from './calculator';
 import dashboard from './dashboard';
 import charts from './charts';
 import detail from './detail';
+import investments from './investments';
 
 const en = {
   common,
@@ -24,6 +25,7 @@ const en = {
   dashboard,
   charts,
   detail,
+  investments,
 };
 
 export default en;

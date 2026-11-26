@@ -23,6 +23,7 @@ export const queryKeys = {
   itemHistory: (label: string) => ['item-history', label] as const,
   analysis: ['budget-analysis'] as const,
   recurring: ['recurring-items'] as const,
+  investments: ['investments'] as const,
 };
 
 /**

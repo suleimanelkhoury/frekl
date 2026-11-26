@@ -3,6 +3,7 @@
 const nav = {
   dashboard: 'Dashboard',
   charts: 'Diagramme',
+  investments: 'Investitionen',
   calculator: 'Taschenrechner',
   settings: 'Einstellungen',
 };

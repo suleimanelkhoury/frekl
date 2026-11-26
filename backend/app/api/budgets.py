@@ -21,6 +21,7 @@ from app.schemas.budget import (
     BudgetUpdate,
     PrefillStrategy,
 )
+from app.schemas.investments import InvestmentsResponse
 from app.schemas.summary import (
     BudgetAnalysisResponse,
     BudgetComparison,
@@ -35,6 +36,7 @@ from app.schemas.summary import (
 )
 from app.services.analysis import analyze_user_labels
 from app.services.excel_export import build_budget_excel
+from app.services.investments import investment_overview
 from app.services.ownership import get_user_budget
 from app.services.prefill import create_prefilled_budget
 from app.services.recurring import recurring_user_items
@@ -278,6 +280,26 @@ def recurring_items(
     actual spending.
     """
     return recurring_user_items(current_user)
+
+
+@router.get(
+    "/investments",
+    response_model=InvestmentsResponse,
+    summary="Investing history: per-month SOLL/IST and per-row breakdown",
+)
+def investments(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> InvestmentsResponse:
+    """Aggregate the Investitionen categories across ALL budgets.
+
+    Returns one entry per budget (chronological) with its projected and
+    actual invested amounts and the running cumulative total — the
+    growth of the portfolio — plus a per-row breakdown (each investment
+    label's total, case-insensitively merged, most recent spelling).
+    Budgets without an investment category contribute zeros.
+    """
+    return investment_overview(current_user)
 
 
 @router.post(

@@ -23,6 +23,11 @@ const BudgetDetailPage = lazy(() =>
 const ChartsPage = lazy(() =>
   import('./pages/ChartsPage').then((m) => ({ default: m.ChartsPage })),
 );
+const InvestmentsPage = lazy(() =>
+  import('./pages/InvestmentsPage').then((m) => ({
+    default: m.InvestmentsPage,
+  })),
+);
 const CalculatorPage = lazy(() =>
   import('./pages/CalculatorPage').then((m) => ({ default: m.CalculatorPage })),
 );
@@ -81,6 +86,10 @@ function App() {
                     element={page(<BudgetDetailPage />)}
                   />
                   <Route path="/charts" element={page(<ChartsPage />)} />
+                  <Route
+                    path="/investments"
+                    element={page(<InvestmentsPage />)}
+                  />
                   <Route
                     path="/calculator"
                     element={page(<CalculatorPage />)}

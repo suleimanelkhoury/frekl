@@ -14,6 +14,7 @@ import type {
   ChartData,
   ExcelImportResponse,
   BudgetAnalysisResponse,
+  InvestmentsResponse,
   ItemHistoryResponse,
   RecurringResponse,
   TopItemsResponse,
@@ -100,6 +101,12 @@ export const budgetsApi = {
   /** Recurring rows aggregated across all budgets (subscriptions). */
   getRecurring: async (): Promise<RecurringResponse> => {
     const response = await api.get<RecurringResponse>('/budgets/recurring');
+    return response.data;
+  },
+
+  /** Investing history: per-month SOLL/IST and per-row breakdown. */
+  getInvestments: async (): Promise<InvestmentsResponse> => {
+    const response = await api.get<InvestmentsResponse>('/budgets/investments');
     return response.data;
   },
 

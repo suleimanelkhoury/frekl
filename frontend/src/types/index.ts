@@ -231,6 +231,29 @@ export interface RecurringResponse {
   items: RecurringItem[];
 }
 
+// ── Investments overview (Investitionen, all budgets) ──
+export interface InvestmentMonth {
+  budget_id: number;
+  title: string;
+  month: number;
+  year: number;
+  projected: string;
+  actual: string;
+  cumulative: string;
+}
+
+export interface InvestmentItem {
+  label: string; // most recent spelling
+  occurrences: number;
+  total: string;
+}
+
+export interface InvestmentsResponse {
+  months: InvestmentMonth[];
+  items: InvestmentItem[];
+  total: string;
+}
+
 // ── Multi-month Comparison ───────────────────
 export interface BudgetComparisonEntry {
   budget_id: number;
