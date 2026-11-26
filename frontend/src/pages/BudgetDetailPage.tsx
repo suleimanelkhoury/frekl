@@ -177,7 +177,7 @@ export function BudgetDetailPage() {
           >
             {t('detail.page.backToDashboard')}
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
             {budget.title}
           </h1>
         </div>

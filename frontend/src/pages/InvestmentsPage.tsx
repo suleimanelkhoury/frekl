@@ -31,12 +31,16 @@ import { budgetsApi } from '../api';
 import { ExpenseHistoryModal } from '../components/ExpenseHistoryModal';
 import { ChartContainer } from '../components/ChartContainer';
 import { Spinner } from '../components/Spinner';
-import { CHART_TOOLTIP_STYLE, SERIES_COLORS } from '../utils/chartTheme';
+import { useIsMobile } from '../hooks/useIsMobile';
+import { CHART_TOOLTIP_STYLE, LEGEND_PROPS, SERIES_COLORS } from '../utils/chartTheme';
 import { formatCurrency, formatMonthYear, toNumber } from '../utils/format';
 import { queryKeys } from '../utils/queryKeys';
 
 export function InvestmentsPage() {
   const { t } = useTranslation();
+  // Phone adaptation for chart geometry (see useIsMobile): lower plot
+  // baselines so the charts don't tower over their information density.
+  const isMobile = useIsMobile();
   const [historyLabel, setHistoryLabel] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -49,7 +53,7 @@ export function InvestmentsPage() {
   if (!data || data.months.length === 0) {
     return (
       <div>
-        <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
+        <h1 className="mb-6 text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
           {t('investments.title')}
         </h1>
         <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-12 text-center dark:border-gray-700 dark:bg-gray-800">
@@ -64,10 +68,25 @@ export function InvestmentsPage() {
   // ── Chart data ───────────────────────────────
   const chartData = data.months.map((m) => ({
     label: formatMonthYear(m.month, m.year),
+    // Kept for the mobile x-axis tick formatter, which labels only
+    // the first month of each year (see yearTickFormatter).
+    year: m.year,
     cumulative: toNumber(m.cumulative),
     actual: toNumber(m.actual),
     projected: toNumber(m.projected),
   }));
+
+  // ── Mobile x-axis: year-change ticks ─────────
+  // On phones, only the first month of each year is labeled — with the
+  // year itself — every other month stays a plain tick (same rule as
+  // ChartsPage). Desktop keeps full month labels.
+  const yearTickFormatter = (value: string, index: number) => {
+    if (!isMobile) return value;
+    const entry = chartData[index];
+    return index === 0 || entry.year !== chartData[index - 1]?.year
+      ? String(entry.year)
+      : '';
+  };
 
   // ── Stats ────────────────────────────────────
   const total = toNumber(data.total);
@@ -80,7 +99,7 @@ export function InvestmentsPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
+      <h1 className="mb-6 text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
         {t('investments.title')}
       </h1>
 
@@ -128,7 +147,7 @@ export function InvestmentsPage() {
       {/* ── Cumulative growth ────────────────────── */}
       <div className="mb-6">
         <ChartContainer title={t('investments.charts.cumulative')}>
-          <ResponsiveContainer width="100%" height={350}>
+          <ResponsiveContainer width="100%" height={isMobile ? 240 : 350}>
             <AreaChart data={chartData}>
               <defs>
                 <linearGradient id="investedFill" x1="0" y1="0" x2="0" y2="1">
@@ -145,7 +164,12 @@ export function InvestmentsPage() {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="label" fontSize={12} />
+              <XAxis
+                dataKey="label"
+                fontSize={12}
+                tickSize={3}
+                tickFormatter={yearTickFormatter}
+              />
               <YAxis fontSize={12} />
               <Tooltip
                 formatter={(value) => formatCurrency(Number(value))}
@@ -167,16 +191,21 @@ export function InvestmentsPage() {
       {/* ── Monthly SOLL vs IST ──────────────────── */}
       <div className="mb-6">
         <ChartContainer title={t('investments.charts.monthly')}>
-          <ResponsiveContainer width="100%" height={350}>
+          <ResponsiveContainer width="100%" height={isMobile ? 240 : 350}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="label" fontSize={12} />
+              <XAxis
+                dataKey="label"
+                fontSize={12}
+                tickSize={3}
+                tickFormatter={yearTickFormatter}
+              />
               <YAxis fontSize={12} />
               <Tooltip
                 formatter={(value) => formatCurrency(Number(value))}
                 contentStyle={CHART_TOOLTIP_STYLE}
               />
-              <Legend />
+              <Legend {...LEGEND_PROPS} />
               <Bar
                 dataKey="projected"
                 name={t('investments.series.projected')}
@@ -205,15 +234,20 @@ export function InvestmentsPage() {
           </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            {/* Phones: 12px font and no occurrences column — label +
+                total identify the row (same rule as the expense
+                history table) */}
+            <table className="w-full text-xs sm:text-sm">
               <thead>
                 <tr className="border-b border-gray-200 text-left text-gray-500 dark:border-gray-700 dark:text-gray-400">
                   <th className="py-2 pr-4 font-medium">
                     {t('investments.items.columns.label')}
                   </th>
-                  <th className="py-2 pr-4 font-medium">
-                    {t('investments.items.columns.occurrences')}
-                  </th>
+                  {!isMobile && (
+                    <th className="py-2 pr-4 font-medium">
+                      {t('investments.items.columns.occurrences')}
+                    </th>
+                  )}
                   <th className="py-2 font-medium text-right">
                     {t('investments.items.columns.total')}
                   </th>
@@ -229,9 +263,11 @@ export function InvestmentsPage() {
                     <td className="py-2 pr-4 font-medium text-gray-900 dark:text-gray-100">
                       {item.label}
                     </td>
-                    <td className="py-2 pr-4 tabular-nums text-gray-700 dark:text-gray-300">
-                      {item.occurrences}
-                    </td>
+                    {!isMobile && (
+                      <td className="py-2 pr-4 tabular-nums text-gray-700 dark:text-gray-300">
+                        {item.occurrences}
+                      </td>
+                    )}
                     <td className="py-2 text-right tabular-nums text-gray-700 dark:text-gray-300">
                       {formatCurrency(item.total)}
                     </td>

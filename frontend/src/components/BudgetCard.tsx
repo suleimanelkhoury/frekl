@@ -81,15 +81,17 @@ export function BudgetCard({
   return (
     <div
       onClick={() => navigate(`/budgets/${budget.id}`)}
-      className={`cursor-pointer rounded-2xl border bg-white p-5 shadow-sm transition-colors hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 ${
+      className={`cursor-pointer rounded-2xl border bg-white p-4 shadow-sm transition-colors hover:bg-gray-50 sm:p-5 dark:bg-gray-800 dark:hover:bg-gray-700 ${
         isCurrent
           ? 'border-brand-400 ring-1 ring-brand-400 dark:border-brand-500 dark:ring-brand-500'
           : 'border-gray-200 dark:border-gray-700'
       }`}
     >
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+      {/* Header: title row + month/actions row on phones, one row on
+          wider screens (month next to the actions) */}
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="text-base font-semibold text-gray-900 sm:text-lg dark:text-white">
             {budget.title}
           </h3>
           {isCurrent && (
@@ -98,7 +100,7 @@ export function BudgetCard({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2 sm:justify-end">
           <span className="text-sm text-gray-500 dark:text-gray-500">
             {formatMonthYear(budget.month, budget.year)}
           </span>

@@ -1,6 +1,7 @@
 /**
  * Shared chart theme — colors and Recharts styling used across
- * ChartsPage, DashboardSummary, and CategorySpendingModal.
+ * ChartsPage, DashboardSummary, CategorySpendingModal,
+ * CategoryDrillDownModal, and InvestmentsPage.
  */
 
 /** Palette used to color pie slices (cycled).
@@ -52,4 +53,13 @@ export const SERIES_COLORS = {
 export const CHART_TOOLTIP_STYLE = {
   borderRadius: '8px',
   border: '1px solid #e5e7eb',
+} as const;
+
+/** Compact legend props — the default 14px legend text wraps into
+ * tall multi-line blocks on phones. Smaller icons + 12px text keep it
+ * to one or two tight lines. Spread onto every <Legend />:
+ * `<Legend {...LEGEND_PROPS} />`. */
+export const LEGEND_PROPS = {
+  iconSize: 10,
+  wrapperStyle: { fontSize: '0.75rem', lineHeight: '1.35' },
 } as const;

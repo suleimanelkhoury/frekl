@@ -38,10 +38,12 @@ import { CategoryDrillDownModal } from '../components/CategoryDrillDownModal';
 import { ChartContainer } from '../components/ChartContainer';
 import { ExpenseHistoryModal } from '../components/ExpenseHistoryModal';
 import { Spinner } from '../components/Spinner';
+import { useIsMobile } from '../hooks/useIsMobile';
 import { formatCurrency, formatMonthYear, toNumber } from '../utils/format';
 import { pillButtonClass } from '../utils/ui';import { queryKeys } from '../utils/queryKeys';
 import {
   CHART_TOOLTIP_STYLE,
+  LEGEND_PROPS,
   PIE_COLORS,
   SERIES_COLORS,
 } from '../utils/chartTheme';
@@ -56,20 +58,24 @@ const MEDAL_COLORS = [
 ];
 
 /** Medal badge (gold / silver / bronze) with blue ribbons, drawn at the
- * left edge of the top three bars in the top-items chart. */
+ * left edge of the top three bars in the top-items chart. The `small`
+ * variant (phones) drops the ribbons and shrinks the ring — the
+ * mobile rows are only 24px tall, too tight for the full medal. */
 function MedalBadge(props: {
   x?: number | string;
   y?: number | string;
   height?: number | string;
   index?: number;
+  small?: boolean;
 }) {
   const index = Number(props.index ?? -1);
   if (index < 0 || index >= MEDAL_COLORS.length) return null;
+  const small = props.small ?? false;
   const x = Number(props.x ?? 0);
   const y = Number(props.y ?? 0);
   const height = Number(props.height ?? 0);
   const { ring, fill } = MEDAL_COLORS[index];
-  const r = 13;
+  const r = small ? 9 : 13;
   const cx = x + r + 1;
   const cy = y + height / 2;
   // Two blue swallowtail ribbons splayed out beneath the medal
@@ -91,15 +97,15 @@ function MedalBadge(props: {
   ));
   return (
     <g>
-      {tails}
+      {!small && tails}
       <circle cx={cx} cy={cy} r={r} fill={ring} />
-      <circle cx={cx} cy={cy} r={r - 4} fill={fill} />
+      <circle cx={cx} cy={cy} r={r - (small ? 3 : 4)} fill={fill} />
       <text
         x={cx}
         y={cy}
         textAnchor="middle"
         dominantBaseline="central"
-        fontSize={12}
+        fontSize={small ? 10 : 12}
         fontWeight={700}
         fill="#ffffff"
       >
@@ -111,6 +117,9 @@ function MedalBadge(props: {
 
 export function ChartsPage() {
   const { t } = useTranslation();
+  // Phone adaptation for SVG-only chart geometry (axis widths, dot
+  // sizes) that Tailwind classes can't reach — see useIsMobile.
+  const isMobile = useIsMobile();
   const [tab, setTab] = useState<ChartTab>('overall');
   const [selectedBudgetId, setSelectedBudgetId] = useState<number | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -142,6 +151,9 @@ export function ChartsPage() {
   const overallData =
     comparison?.budgets.map((e) => ({
       label: formatMonthYear(e.month, e.year),
+      // Kept for the mobile x-axis tick formatter, which labels only
+      // the first month of each year (see yearTickFormatter).
+      year: e.year,
       // Total income (Gehalt + Extra) — Extra often contains the
       // previous month's carryover, so showing only Gehalt would
       // understate income in months with big carryovers.
@@ -156,6 +168,27 @@ export function ChartsPage() {
   const topItemsData =
     topItems?.items.map((i) => ({ label: i.label, value: toNumber(i.total) })) ??
     [];
+
+  // ── Mobile x-axis: year-change ticks ─────────
+  // Month labels crowd a phone-width axis (only ~3 random labels fit).
+  // Instead, on phones only the first month of each year is labeled —
+  // with the year itself ("2025") — and every other month renders as
+  // a plain tick. Desktop keeps the full month labels.
+  const yearTickFormatter = (value: string, index: number) => {
+    if (!isMobile) return value;
+    const entry = overallData[index];
+    return index === 0 || entry.year !== overallData[index - 1]?.year
+      ? String(entry.year)
+      : '';
+  };
+
+  // ── Mobile y-axis: truncated category names ──
+  // The category axis reserves only ~96px on phones; long names
+  // ("MSCI Emerging Market") eat a third of the plot width. Truncate
+  // to 10 characters with an ellipsis on phones — the full name stays
+  // in the tooltip.
+  const truncateTick = (value: string) =>
+    isMobile && value.length > 10 ? `${value.slice(0, 9)}…` : value;
 
   // Custom bar shape for the top-items chart: gold/silver/bronze for
   // the top three (with a darker border of their own color), brand
@@ -224,10 +257,12 @@ export function ChartsPage() {
     .sort((a, b) => b.variance - a.variance);
 
   // Shared height for the monthly charts so the side-by-side cards
-  // align (the bar chart scales with the number of categories).
+  // align (the bar chart scales with the number of categories). Lower
+  // baseline on phones — 350px of plot for ~300px width carries no
+  // extra information, it just scrolls.
   const chartHeight = Math.max(
-    350,
-    activeCategories.length * 34 + 60,
+    isMobile ? 240 : 350,
+    activeCategories.length * (isMobile ? 24 : 34) + 60,
   );
 
   const selectCategory = (name: string | undefined) => {
@@ -237,7 +272,7 @@ export function ChartsPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
+      <h1 className="mb-6 text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
         {t('charts.title')}
       </h1>
 
@@ -273,23 +308,28 @@ export function ChartsPage() {
           <div className="grid grid-cols-1 gap-6">
             {/* ── Income vs Expenses over time ────── */}
             <ChartContainer title={t('charts.charts.incomeVsExpenses.title')}>
-              <ResponsiveContainer width="100%" height={350}>
+              <ResponsiveContainer width="100%" height={isMobile ? 240 : 350}>
                 <LineChart data={overallData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="label" fontSize={12} />
+                  <XAxis
+                    dataKey="label"
+                    fontSize={12}
+                    tickSize={3}
+                    tickFormatter={yearTickFormatter}
+                  />
                   <YAxis fontSize={12} />
                   <Tooltip
                     formatter={(value) => formatCurrency(Number(value))}
                     contentStyle={CHART_TOOLTIP_STYLE}
                   />
-                  <Legend />
+                  <Legend {...LEGEND_PROPS} />
                   <Line
                     type="monotone"
                     dataKey="income"
                     name={t('charts.series.incomeGehaltExtra')}
                     stroke={SERIES_COLORS.Income}
                     strokeWidth={2}
-                    dot={{ r: 4 }}
+                    dot={{ r: isMobile ? 2.5 : 4 }}
                   />
                   <Line
                     type="monotone"
@@ -297,7 +337,7 @@ export function ChartsPage() {
                     name={t('charts.series.expensesActual')}
                     stroke={SERIES_COLORS.Expenses}
                     strokeWidth={2}
-                    dot={{ r: 4 }}
+                    dot={{ r: isMobile ? 2.5 : 4 }}
                   />
                   <Line
                     type="monotone"
@@ -319,16 +359,21 @@ export function ChartsPage() {
                 trajectory. The dashed plan line shows how the SOLL
                 forecast tracked it. */}
             <ChartContainer title={t('charts.charts.balance.title')}>
-              <ResponsiveContainer width="100%" height={350}>
+              <ResponsiveContainer width="100%" height={isMobile ? 240 : 350}>
                 <LineChart data={overallData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="label" fontSize={12} />
+                  <XAxis
+                    dataKey="label"
+                    fontSize={12}
+                    tickSize={3}
+                    tickFormatter={yearTickFormatter}
+                  />
                   <YAxis fontSize={12} />
                   <Tooltip
                     formatter={(value) => formatCurrency(Number(value))}
                     contentStyle={CHART_TOOLTIP_STYLE}
                   />
-                  <Legend />
+                  <Legend {...LEGEND_PROPS} />
                   <ReferenceLine y={0} stroke="#9ca3af" strokeDasharray="4 4" />
                   <Line
                     type="monotone"
@@ -336,7 +381,7 @@ export function ChartsPage() {
                     name={t('charts.series.balanceActual')}
                     stroke={SERIES_COLORS.Balance}
                     strokeWidth={2}
-                    dot={{ r: 4 }}
+                    dot={{ r: isMobile ? 2.5 : 4 }}
                   />
                   <Line
                     type="monotone"
@@ -356,20 +401,28 @@ export function ChartsPage() {
               <ChartContainer title={t('charts.charts.topExpenses.title')}>
                 <ResponsiveContainer
                   width="100%"
-                  height={Math.max(350, topItemsData.length * 34 + 60)}
+                  height={Math.max(
+                    isMobile ? 200 : 350,
+                    topItemsData.length * (isMobile ? 24 : 34) + 60,
+                  )}
                 >
                   <BarChart
                     data={topItemsData}
                     layout="vertical"
-                    margin={{ left: 8, right: 24 }}
+                    // On phones the y-axis line sits closer to the card
+                    // edge to give the plot more width (the margin sits
+                    // between the card edge and the axis, so growing it
+                    // moves the line right). Desktop keeps the default.
+                    margin={{ left: isMobile ? -14 : 8, right: 24 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis type="number" fontSize={12} />
                     <YAxis
                       type="category"
                       dataKey="label"
-                      width={130}
+                      width={isMobile ? 96 : 130}
                       fontSize={12}
+                      tickFormatter={truncateTick}
                     />
                     <Tooltip
                       formatter={(value) => formatCurrency(Number(value))}
@@ -378,6 +431,9 @@ export function ChartsPage() {
                     <Bar
                       dataKey="value"
                       name={t('charts.series.spentIst')}
+                      // Thin bars on phones — auto size fills most of
+                      // the 24px row and reads chunky
+                      barSize={isMobile ? 18 : undefined}
                       shape={renderTopItemBar}
                       radius={[0, 4, 4, 0]}
                       onClick={(data) =>
@@ -387,8 +443,14 @@ export function ChartsPage() {
                       }
                       className="cursor-pointer"
                     >
-                      {/* Medals on the top three bars */}
-                      <LabelList dataKey="value" content={MedalBadge} />
+                      {/* Medals on the top three bars (compact variant
+                          on phones) */}
+                      <LabelList
+                        dataKey="value"
+                        content={(props) => (
+                          <MedalBadge {...props} small={isMobile} />
+                        )}
+                      />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -453,24 +515,26 @@ export function ChartsPage() {
                   <BarChart
                     data={activeCategories}
                     layout="vertical"
-                    margin={{ left: 8, right: 24 }}
+                    margin={{ left: isMobile ? -14 : 8, right: 24 }}
                   >
                     <XAxis type="number" fontSize={12} />
                     <YAxis
                       type="category"
                       dataKey="label"
-                      width={130}
+                      width={isMobile ? 96 : 130}
                       fontSize={12}
+                      tickFormatter={truncateTick}
                     />
                     <Tooltip
                       formatter={(value) => formatCurrency(Number(value))}
                       contentStyle={CHART_TOOLTIP_STYLE}
                     />
-                    <Legend />
+                    <Legend {...LEGEND_PROPS} />
                     <Bar
                       dataKey="projected"
                       name="SOLL"
                       fill={SERIES_COLORS.Projected}
+                      barSize={isMobile ? 10 : undefined}
                       radius={[0, 4, 4, 0]}
                       onClick={(data) =>
                         selectCategory((data as { label?: string })?.label)
@@ -481,6 +545,7 @@ export function ChartsPage() {
                       dataKey="actual"
                       name="IST"
                       fill={SERIES_COLORS.Actual}
+                      barSize={isMobile ? 10 : undefined}
                       radius={[0, 4, 4, 0]}
                       onClick={(data) =>
                         selectCategory((data as { label?: string })?.label)
@@ -495,7 +560,10 @@ export function ChartsPage() {
               {/* Donut style: percentages on the slices (values in the
                   tooltip), hole keeps the visual weight light. */}
               <ChartContainer title={t('charts.charts.expenseDistribution.title')}>
-                <ResponsiveContainer width="100%" height={chartHeight}>
+                <ResponsiveContainer
+                  width="100%"
+                  height={isMobile ? 300 : chartHeight}
+                >
                   <PieChart>
                     <Pie
                       data={pieData}
@@ -503,12 +571,14 @@ export function ChartsPage() {
                       nameKey="name"
                       cx="50%"
                       cy="50%"
-                      innerRadius={55}
-                      outerRadius={120}
+                      // Smaller donut on phones so the percentage
+                      // labels stay inside the plot
+                      innerRadius={isMobile ? 38 : 55}
+                      outerRadius={isMobile ? 82 : 120}
                       label={(entry) =>
                         `${Math.round((entry.percent ?? 0) * 100)}%`
                       }
-                      fontSize={11}
+                      fontSize={isMobile ? 10 : 11}
                       onClick={(entry) =>
                         selectCategory((entry as { name?: string })?.name)
                       }
@@ -525,7 +595,7 @@ export function ChartsPage() {
                       formatter={(value) => formatCurrency(Number(value))}
                       contentStyle={CHART_TOOLTIP_STYLE}
                     />
-                    <Legend />
+                    <Legend {...LEGEND_PROPS} />
                   </PieChart>
                 </ResponsiveContainer>
               </ChartContainer>
@@ -539,15 +609,16 @@ export function ChartsPage() {
                   <BarChart
                     data={varianceData}
                     layout="vertical"
-                    margin={{ left: 8, right: 24 }}
+                    margin={{ left: isMobile ? -14 : 8, right: 24 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis type="number" fontSize={12} />
                     <YAxis
                       type="category"
                       dataKey="label"
-                      width={130}
+                      width={isMobile ? 96 : 130}
                       fontSize={12}
+                      tickFormatter={truncateTick}
                     />
                     <Tooltip
                       formatter={(value) => formatCurrency(Number(value))}
@@ -557,6 +628,7 @@ export function ChartsPage() {
                     <Bar
                       dataKey="variance"
                       name={t('charts.series.sollMinusIst')}
+                      barSize={isMobile ? 18 : undefined}
                       radius={[0, 4, 4, 0]}
                       onClick={(data) =>
                         selectCategory((data as { label?: string })?.label)
@@ -583,7 +655,7 @@ export function ChartsPage() {
                 title={t('charts.charts.incomeVsExpensesSummary.title')}
                 className="lg:col-span-2"
               >
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-4 sm:gap-6">
                   <div className="rounded-lg bg-brand-50 p-4 dark:bg-brand-900/30">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       {t('charts.labels.projectedBalance')}

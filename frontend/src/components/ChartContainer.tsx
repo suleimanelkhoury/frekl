@@ -19,9 +19,9 @@ export function ChartContainer({
 }: ChartContainerProps) {
   return (
     <div
-      className={`rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800 ${className}`}
+      className={`rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5 dark:border-gray-700 dark:bg-gray-800 ${className}`}
     >
-      <h3 className="mb-4 text-base font-semibold text-gray-900 dark:text-white">
+      <h3 className="mb-3 text-base font-semibold text-gray-900 sm:mb-4 dark:text-white">
         {title}
       </h3>
       <div className="w-full">{children}</div>

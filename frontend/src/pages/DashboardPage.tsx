@@ -119,20 +119,21 @@ export function DashboardPage() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+      {/* Stacks above sm: title, then full-width action buttons */}
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
           {t('dashboard.title')}
         </h1>
         <div className="flex gap-3">
           <button
             onClick={() => setShowImportModal(true)}
-            className={`${neutralButtonClass} inline-flex items-center gap-2`}
+            className={`${neutralButtonClass} inline-flex flex-1 items-center justify-center gap-2 sm:flex-none`}
           >
             <UploadIcon size={14} /> {t('dashboard.actions.importExcel')}
           </button>
           <button
             onClick={() => setShowCreateForm(true)}
-            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
+            className="flex-1 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700 sm:flex-none"
           >
             {t('dashboard.actions.newBudget')}
           </button>
@@ -146,7 +147,7 @@ export function DashboardPage() {
             {t('dashboard.create.heading')}
           </h2>
           <form onSubmit={handleCreate} className="flex flex-wrap gap-4">
-            <div className="flex-1">
+            <div className="w-full">
               <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 {t('dashboard.create.titleLabel')}
               </label>
@@ -161,7 +162,7 @@ export function DashboardPage() {
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
               />
             </div>
-            <div>
+            <div className="min-w-24 flex-1">
               <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 {t('dashboard.create.monthLabel')}
               </label>
@@ -173,7 +174,7 @@ export function DashboardPage() {
                     month: parseInt(e.target.value),
                   })
                 }
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
               >
                 {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                   <option key={m} value={m}>
@@ -182,7 +183,7 @@ export function DashboardPage() {
                 ))}
               </select>
             </div>
-            <div>
+            <div className="min-w-24 flex-1">
               <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 {t('dashboard.create.yearLabel')}
               </label>
@@ -194,17 +195,17 @@ export function DashboardPage() {
                 }
                 min="2000"
                 max="2100"
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
               />
             </div>
-            <div>
+            <div className="min-w-24 flex-1">
               <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 {t('dashboard.create.prefillLabel')}
               </label>
               <select
                 value={effectivePrefill}
                 onChange={(e) => setPrefill(e.target.value as PrefillStrategy)}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
               >
                 <option value="average" disabled={!hasEarlier}>
                   {t('dashboard.create.prefillAverage')}
@@ -215,11 +216,11 @@ export function DashboardPage() {
                 <option value="none">{t('dashboard.create.prefillNone')}</option>
               </select>
             </div>
-            <div className="flex items-end gap-2">
+            <div className="flex w-full gap-2 sm:w-auto">
               <button
                 type="submit"
                 disabled={createMutation.isPending}
-                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50"
+                className="flex-1 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50 sm:flex-none"
               >
                 {createMutation.isPending
                   ? t('dashboard.create.submitting')
@@ -228,7 +229,7 @@ export function DashboardPage() {
               <button
                 type="button"
                 onClick={() => setShowCreateForm(false)}
-                className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                className="flex-1 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 sm:flex-none"
               >
                 {t('common.actions.cancel')}
               </button>

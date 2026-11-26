@@ -191,7 +191,7 @@ export function CalculatorPage() {
         setSelectedRow('');
       }}
     >
-      <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
+      <h1 className="mb-6 text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
         {t('calculator.title')}
       </h1>
 
@@ -244,8 +244,10 @@ export function CalculatorPage() {
 
       {budget && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* ── Left ⅔: the whole budget ─────────── */}
-          <div className="lg:col-span-2">
+          {/* ── Left ⅔: the whole budget (below the calculator on
+              phones — the keypad shouldn't sit at the bottom of a
+              long scroll) ───────────────────────── */}
+          <div className="order-2 lg:order-1 lg:col-span-2">
             <BudgetOverview
               budget={budget}
               summary={summary}
@@ -264,8 +266,8 @@ export function CalculatorPage() {
             />
           </div>
 
-          {/* ── Right ⅓: calculator ──────────────── */}
-          <div>
+          {/* ── Right ⅓: calculator (first on phones) ── */}
+          <div className="order-1 lg:order-2">
             <CalculatorPanel
               budget={budget}
               selectedRow={selectedRow}
@@ -1192,8 +1194,9 @@ function CalculatorPanel({
     : input || seedString || '0';
 
   const calcButtonClass = (variant: 'num' | 'op' | 'clear' | 'equals') => {
+    // Slightly taller keys on phones (thumb targets), standard on sm+
     const base =
-      'rounded-xl py-3 text-lg font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-40 disabled:cursor-not-allowed';
+      'rounded-xl py-3.5 text-lg font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-40 disabled:cursor-not-allowed sm:py-3';
     switch (variant) {
       case 'op':
         return `${base} bg-gray-100 text-brand-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-brand-300 dark:hover:bg-gray-600`;
@@ -1276,7 +1279,7 @@ function CalculatorPanel({
             setError(null);
           }}
           title={t('calculator.tooltips.roundUp')}
-          className={`rounded-xl py-3 text-lg font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
+          className={`rounded-xl py-3.5 text-lg font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 sm:py-3 ${
             roundUp
               ? 'bg-emerald-600 text-white hover:bg-emerald-700'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'

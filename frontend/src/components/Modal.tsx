@@ -48,7 +48,7 @@ export function Modal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-base font-semibold text-gray-900 sm:text-lg dark:text-white">
             {title}
           </h3>
           {closeButton && (

@@ -158,15 +158,16 @@ export function DashboardSummary({ year }: { year: number }) {
   return (
     <div className="mb-4">
       {/* ── Money snapshot (single flat panel) ──── */}
-      <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
-        {/* Hero + category spending button */}
-        <div className="flex items-start justify-between gap-4">
+      <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-5 dark:border-gray-700 dark:bg-gray-800">
+        {/* Hero + category spending button (button drops below the
+            hero on narrow screens) */}
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
           <div>
             <p className="text-sm text-gray-500 dark:text-gray-500">
               {t('dashboard.summary.earned')}
             </p>
             <p
-              className="mt-0.5 text-3xl font-bold tabular-nums text-teal-600 dark:text-teal-400"
+              className="mt-0.5 text-2xl font-bold tabular-nums text-teal-600 sm:text-3xl dark:text-teal-400"
               title={t('dashboard.summary.earnedTitle', {
                 count: entries.length,
                 year,
@@ -178,7 +179,7 @@ export function DashboardSummary({ year }: { year: number }) {
           <button
             type="button"
             onClick={() => setShowCategorySpending(true)}
-            className={`${neutralButtonClass} inline-flex items-center gap-2`}
+            className={`${neutralButtonClass} inline-flex w-full items-center justify-center gap-2 sm:w-auto`}
             title={t('dashboard.summary.categorySpendingTitle', { year })}
           >
             <ChartPieIcon size={14} />{' '}
@@ -218,8 +219,9 @@ export function DashboardSummary({ year }: { year: number }) {
           </div>
         )}
 
-        {/* Inline stat row — hairline-separated, no boxes */}
-        <div className="mt-5 flex flex-wrap gap-x-10 gap-y-3 border-t border-gray-100 pt-4 dark:border-gray-800">
+        {/* Inline stat row — hairline-separated, no boxes. Two aligned
+            columns on phones, free-flowing row on wider screens. */}
+        <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-gray-100 pt-4 sm:flex sm:flex-wrap sm:gap-x-10 dark:border-gray-800">
           <InlineStat
             label={t('dashboard.summary.overallIncome')}
             title={t('dashboard.summary.overallIncomeTitle', {

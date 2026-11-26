@@ -23,7 +23,7 @@ import { Modal } from './Modal';
 import { Spinner } from './Spinner';
 import { balanceColor } from '../utils/balance';
 import { formatCurrency, formatMonthShort, toNumber } from '../utils/format';
-import { CHART_TOOLTIP_STYLE, SERIES_COLORS } from '../utils/chartTheme';
+import { CHART_TOOLTIP_STYLE, LEGEND_PROPS, SERIES_COLORS } from '../utils/chartTheme';
 import { queryKeys } from '../utils/queryKeys';
 
 interface CategoryDrillDownModalProps {
@@ -133,7 +133,7 @@ export function CategoryDrillDownModal({
                 formatter={(value) => formatCurrency(Number(value))}
                 contentStyle={CHART_TOOLTIP_STYLE}
               />
-              <Legend />
+              <Legend {...LEGEND_PROPS} />
               <Line
                 type="monotone"
                 dataKey="projected"

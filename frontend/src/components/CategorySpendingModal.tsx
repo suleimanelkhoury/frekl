@@ -25,7 +25,7 @@ import {
 import { budgetsApi } from '../api';
 import { Modal } from './Modal';
 import { formatCurrency, toNumber } from '../utils/format';
-import { CHART_TOOLTIP_STYLE, SERIES_COLORS } from '../utils/chartTheme';
+import { CHART_TOOLTIP_STYLE, LEGEND_PROPS, SERIES_COLORS } from '../utils/chartTheme';
 import { queryKeys } from '../utils/queryKeys';
 import { pillButtonClass } from '../utils/ui';
 
@@ -141,7 +141,7 @@ export function CategorySpendingModal({
               />
               {compare && previous ? (
                 <>
-                  <Legend />
+                  <Legend {...LEGEND_PROPS} />
                   <Bar
                     dataKey="Spent"
                     name={t('detail.spending.legendYear', { year })}

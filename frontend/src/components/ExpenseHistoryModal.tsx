@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { budgetsApi } from '../api';
 import { Modal } from './Modal';
 import { Spinner } from './Spinner';
+import { useIsMobile } from '../hooks/useIsMobile';
 import { balanceColor } from '../utils/balance';
 import { formatCurrency, formatMonthYear, toNumber } from '../utils/format';
 import { queryKeys } from '../utils/queryKeys';
@@ -33,6 +34,10 @@ export function ExpenseHistoryModal({
 }: ExpenseHistoryModalProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  // Phones: the category column is dropped (budget + amounts identify
+  // the entry) and the table steps down to 12px — five columns don't
+  // fit a narrow modal.
+  const isMobile = useIsMobile();
 
   const { data, isLoading } = useQuery({
     queryKey: queryKeys.itemHistory(label),
@@ -62,15 +67,17 @@ export function ExpenseHistoryModal({
             {t('charts.history.openHint')}
           </p>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-xs sm:text-sm">
               <thead>
                 <tr className="border-b border-gray-200 text-left text-gray-500 dark:border-gray-700 dark:text-gray-400">
                   <th className="py-2 pr-4 font-medium">
                     {t('charts.history.budget')}
                   </th>
-                  <th className="py-2 pr-4 font-medium">
-                    {t('charts.history.category')}
-                  </th>
+                  {!isMobile && (
+                    <th className="py-2 pr-4 font-medium">
+                      {t('charts.history.category')}
+                    </th>
+                  )}
                   <th className="py-2 font-medium text-right">
                     {t('charts.history.projected')}
                   </th>
@@ -96,9 +103,11 @@ export function ExpenseHistoryModal({
                     <td className="py-2 pr-4 text-gray-900 dark:text-gray-100">
                       {formatMonthYear(entry.month, entry.year)}
                     </td>
-                    <td className="py-2 pr-4 text-gray-700 dark:text-gray-300">
-                      {entry.category}
-                    </td>
+                    {!isMobile && (
+                      <td className="py-2 pr-4 text-gray-700 dark:text-gray-300">
+                        {entry.category}
+                      </td>
+                    )}
                     <td className="py-2 text-right text-gray-700 dark:text-gray-300">
                       {formatCurrency(entry.projected_cost)}
                     </td>
@@ -115,7 +124,7 @@ export function ExpenseHistoryModal({
               </tbody>
               <tfoot>
                 <tr className="font-semibold text-gray-900 dark:text-gray-100">
-                  <td className="py-2 pr-4" colSpan={2}>
+                  <td className="py-2 pr-4" colSpan={isMobile ? 1 : 2}>
                     {t('charts.history.total')}
                   </td>
                   <td className="py-2 text-right">

@@ -51,13 +51,13 @@ export function SettingsPage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
+      <h1 className="mb-6 text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
         {t('settings.title')}
       </h1>
 
       {/* ── Profile ───────────────────────────── */}
       <section className="mb-8">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+        <h2 className="mb-4 text-base font-semibold text-gray-900 sm:text-lg dark:text-white">
           {t('settings.profile.title')}
         </h2>
         <div className="space-y-3">
@@ -84,7 +84,7 @@ export function SettingsPage() {
 
       {/* ── Language ──────────────────────────── */}
       <section className="mb-8">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+        <h2 className="mb-4 text-base font-semibold text-gray-900 sm:text-lg dark:text-white">
           {t('settings.language.title')}
         </h2>
         <div className="max-w-xs">
@@ -96,7 +96,7 @@ export function SettingsPage() {
 
       {/* ── Budget analysis ───────────────────── */}
       <section className="mb-8">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+        <h2 className="mb-4 text-base font-semibold text-gray-900 sm:text-lg dark:text-white">
           {t('settings.analysis.title')}
         </h2>
         <p className="mb-4 text-sm text-gray-500 dark:text-gray-500">
@@ -105,7 +105,7 @@ export function SettingsPage() {
         <button
           type="button"
           onClick={() => setAnalysisOpen(true)}
-          className={neutralButtonClass}
+          className={`${neutralButtonClass} w-full sm:w-auto`}
         >
           {t('settings.analysis.open')}
         </button>
@@ -115,7 +115,7 @@ export function SettingsPage() {
 
       {/* ── Subscriptions / recurring items ───── */}
       <section className="mb-8">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+        <h2 className="mb-4 text-base font-semibold text-gray-900 sm:text-lg dark:text-white">
           {t('settings.subscriptions.title')}
         </h2>
         <p className="mb-4 text-sm text-gray-500 dark:text-gray-500">
@@ -124,7 +124,7 @@ export function SettingsPage() {
         <button
           type="button"
           onClick={() => setSubscriptionsOpen(true)}
-          className={neutralButtonClass}
+          className={`${neutralButtonClass} w-full sm:w-auto`}
         >
           {t('settings.subscriptions.open')}
         </button>
@@ -134,18 +134,18 @@ export function SettingsPage() {
 
       {/* ── Backup & restore ──────────────────── */}
       <section className="mb-8">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+        <h2 className="mb-4 text-base font-semibold text-gray-900 sm:text-lg dark:text-white">
           {t('settings.backup.title')}
         </h2>
         <p className="mb-4 text-sm text-gray-500 dark:text-gray-500">
           {t('settings.backup.hint')}
         </p>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <button
             type="button"
             onClick={handleDownloadBackup}
             disabled={downloading}
-            className={neutralButtonClass}
+            className={`${neutralButtonClass} w-full sm:w-auto`}
           >
             {downloading
               ? t('settings.backup.downloading')
@@ -154,7 +154,7 @@ export function SettingsPage() {
           <button
             type="button"
             onClick={() => setRestoreOpen(true)}
-            className={neutralButtonClass}
+            className={`${neutralButtonClass} w-full sm:w-auto`}
           >
             {t('settings.backup.restore')}
           </button>
@@ -170,7 +170,7 @@ export function SettingsPage() {
 
       {/* ── Change password (placeholder) ─────── */}
       <section className="mb-8">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+        <h2 className="mb-4 text-base font-semibold text-gray-900 sm:text-lg dark:text-white">
           {t('settings.changePassword.title')}
         </h2>
         <p className="text-sm text-gray-500 dark:text-gray-500">
@@ -190,7 +190,7 @@ export function SettingsPage() {
         </p>
         <button
           onClick={handleLogout}
-          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+          className="w-full rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 sm:w-auto"
         >
           {t('settings.logout.title')}
         </button>
