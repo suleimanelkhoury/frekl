@@ -12,6 +12,7 @@ from app.schemas.expense_item import (
     ExpenseItemResponse,
     ExpenseItemUpdate,
 )
+from app.services.crud import apply_update
 from app.services.ownership import get_user_category, get_user_expense_item
 from app.services.touch import touch_budget_by_id
 
@@ -60,9 +61,7 @@ def update_expense_item(
     """Update an expense item's label, projected cost, or actual cost."""
     item = get_user_expense_item(db, item_id, current_user)
 
-    update_data = item_in.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(item, field, value)
+    apply_update(item, item_in)
 
     touch_budget_by_id(db, item.category.budget_id)
     db.commit()

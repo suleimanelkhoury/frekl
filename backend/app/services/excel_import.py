@@ -29,6 +29,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.core.config import settings
 from app.core.exceptions import ConflictError
 from app.models.budget import Budget
+from app.services.excel_layout import german_month_number
 from app.models.category import Category
 from app.models.expense_item import ExpenseItem
 from app.models.income import Income
@@ -580,29 +581,13 @@ def parse_excel_and_create_budget(
     return budget, len(categories), len(incomes), items_count
 
 
-# German month names for parsing titles like "Juli 2026"
-GERMAN_MONTHS = {
-    "januar": 1,
-    "februar": 2,
-    "märz": 3,
-    "april": 4,
-    "mai": 5,
-    "juni": 6,
-    "juli": 7,
-    "august": 8,
-    "september": 9,
-    "oktober": 10,
-    "november": 11,
-    "dezember": 12,
-}
-
-
 def _try_parse_title_for_date(title: str, budget: Budget) -> None:
     """Try to extract month and year from a title like 'Juli 2026'."""
     parts = title.lower().split()
     for part in parts:
-        if part in GERMAN_MONTHS:
-            budget.month = GERMAN_MONTHS[part]
+        month = german_month_number(part)
+        if month is not None:
+            budget.month = month
         elif part.isdigit() and 1900 <= int(part) <= 2100:
             budget.year = int(part)
 

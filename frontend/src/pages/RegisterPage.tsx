@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { useAuth } from '../hooks/useAuth';
 import { LogoMark } from '../components/Logo';
+import { fieldInputClass } from '../utils/ui';
 
 type RegisterFormData = {
   email: string;
@@ -91,7 +92,7 @@ export function RegisterPage() {
               <input
                 {...register('email')}
                 type="email"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                className={`w-full ${fieldInputClass}`}
                 placeholder={t('auth.register.emailPlaceholder')}
               />
               {errors.email && (
@@ -108,7 +109,7 @@ export function RegisterPage() {
               <input
                 {...register('password')}
                 type="password"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                className={`w-full ${fieldInputClass}`}
                 placeholder={t('auth.register.passwordPlaceholder')}
               />
               {errors.password && (
@@ -125,7 +126,7 @@ export function RegisterPage() {
               <input
                 {...register('confirmPassword')}
                 type="password"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                className={`w-full ${fieldInputClass}`}
                 placeholder={t('auth.register.confirmPasswordPlaceholder')}
               />
               {errors.confirmPassword && (

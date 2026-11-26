@@ -16,6 +16,8 @@ can't flood the response.
 """
 
 from app.models.user import User
+from app.services.chronology import chronological_budgets
+from app.services.labels import simple_label
 from app.schemas.search import SearchHit, SearchResponse
 
 MAX_BUDGET_HITS = 10
@@ -29,7 +31,7 @@ def search_user_data(user: User, query: str) -> SearchResponse:
     Returns aggregated hits: one per distinct budget title, category
     name, and item label.
     """
-    needle = query.strip().lower()
+    needle = simple_label(query)
     if not needle:
         return SearchResponse(query=query, budgets=[], categories=[], items=[])
 
@@ -40,11 +42,9 @@ def search_user_data(user: User, query: str) -> SearchResponse:
     category_acc: dict[str, dict] = {}
     item_acc: dict[str, dict] = {}
 
-    budgets = sorted(
-        user.budgets, key=lambda b: (b.year, b.month, b.id), reverse=True
-    )
+    budgets = chronological_budgets(user.budgets, reverse=True)
     for budget in budgets:
-        key = budget.title.strip().lower()
+        key = simple_label(budget.title)
         budget_acc.setdefault(
             key,
             {
@@ -58,7 +58,7 @@ def search_user_data(user: User, query: str) -> SearchResponse:
         )["budgets"].add(budget.id)
 
         for category in budget.categories:
-            cat_key = category.name.strip().lower()
+            cat_key = simple_label(category.name)
             cat_entry = category_acc.setdefault(
                 cat_key,
                 {
@@ -75,7 +75,7 @@ def search_user_data(user: User, query: str) -> SearchResponse:
             for item in category.items:
                 if needle not in item.label.lower():
                     continue
-                item_key = item.label.strip().lower()
+                item_key = simple_label(item.label)
                 item_acc.setdefault(
                     item_key,
                     {

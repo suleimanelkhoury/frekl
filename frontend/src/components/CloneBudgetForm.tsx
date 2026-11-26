@@ -11,8 +11,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { budgetsApi } from '../api';
 import { formatMonthYear } from '../utils/format';
-import { queryKeys } from '../utils/queryKeys';
-import { neutralButtonClass } from '../utils/ui';
+import { invalidateGlobalBudgetData } from '../utils/queryKeys';
+import {neutralButtonClass, fieldInputClass} from '../utils/ui';
 import type { Budget } from '../types';
 
 interface CloneBudgetFormProps {
@@ -45,9 +45,7 @@ export function CloneBudgetForm({
   const cloneMutation = useMutation({
     mutationFn: () => budgetsApi.clone(budgetId, cloneData),
     onSuccess: (newBudget) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.budgets });
-      queryClient.invalidateQueries({ queryKey: queryKeys.comparison });
-      queryClient.invalidateQueries({ queryKey: queryKeys.yearlyComparison });
+      invalidateGlobalBudgetData(queryClient);
       onClose();
       navigate(`/budgets/${newBudget.id}`);
     },
@@ -79,7 +77,7 @@ export function CloneBudgetForm({
               setCloneData({ ...cloneData, title: e.target.value })
             }
             required
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+            className={`w-full ${fieldInputClass}`}
           />
         </div>
         <div>
@@ -98,7 +96,7 @@ export function CloneBudgetForm({
               })
             }
             required
-            className="w-20 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+            className={`w-20 ${fieldInputClass}`}
           />
         </div>
         <div>
@@ -117,7 +115,7 @@ export function CloneBudgetForm({
               })
             }
             required
-            className="w-24 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+            className={`w-24 ${fieldInputClass}`}
           />
         </div>
         <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">

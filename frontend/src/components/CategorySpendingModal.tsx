@@ -24,8 +24,18 @@ import {
 } from 'recharts';
 import { budgetsApi } from '../api';
 import { Modal } from './Modal';
+import { useIsMobile } from '../hooks/useIsMobile';
 import { formatCurrency, toNumber } from '../utils/format';
-import { CHART_TOOLTIP_STYLE, LEGEND_PROPS, SERIES_COLORS } from '../utils/chartTheme';
+import {
+  categoryYAxisProps,
+  currencyTooltipProps,
+  gridProps,
+  LEGEND_PROPS,
+  numberXAxisProps,
+  rowsHeight,
+  SERIES_COLORS,
+  vBarMargin,
+} from '../utils/chartTheme';
 import { queryKeys } from '../utils/queryKeys';
 import { pillButtonClass } from '../utils/ui';
 
@@ -42,6 +52,8 @@ export function CategorySpendingModal({
   // is what the button promises; the toggle is for digging deeper.
   const [compare, setCompare] = useState(false);
   const { t } = useTranslation();
+  // Phone geometry for the chart (see useIsMobile)
+  const isMobile = useIsMobile();
 
   const { data, isLoading } = useQuery({
     queryKey: queryKeys.yearlyComparison,
@@ -119,25 +131,19 @@ export function CategorySpendingModal({
 
           <ResponsiveContainer
             width="100%"
-            height={Math.max(300, chartData.length * 34 + 60)}
+            height={rowsHeight(chartData.length, isMobile, 300)}
           >
             <BarChart
               data={chartData}
               layout="vertical"
-              margin={{ left: 8, right: 24 }}
+              margin={vBarMargin(isMobile)}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis type="number" fontSize={11} />
-              <YAxis
-                type="category"
-                dataKey="Category"
-                width={130}
-                fontSize={11}
-              />
+              <CartesianGrid {...gridProps} />
+              <XAxis {...numberXAxisProps} />
+              <YAxis {...categoryYAxisProps('Category', isMobile)} />
               <Tooltip
-                formatter={(value) => formatCurrency(Number(value))}
+                {...currencyTooltipProps}
                 cursor={{ fill: 'rgba(184, 73, 44, 0.08)' }}
-                contentStyle={CHART_TOOLTIP_STYLE}
               />
               {compare && previous ? (
                 <>

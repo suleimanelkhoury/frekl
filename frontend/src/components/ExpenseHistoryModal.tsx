@@ -21,6 +21,7 @@ import { useIsMobile } from '../hooks/useIsMobile';
 import { balanceColor } from '../utils/balance';
 import { formatCurrency, formatMonthYear, toNumber } from '../utils/format';
 import { queryKeys } from '../utils/queryKeys';
+import { tableHeadRowClass, clickableRowClass } from '../utils/ui';
 
 interface ExpenseHistoryModalProps {
   /** The row label clicked in the chart (display spelling). */
@@ -69,7 +70,7 @@ export function ExpenseHistoryModal({
           <div className="overflow-x-auto">
             <table className="w-full text-xs sm:text-sm">
               <thead>
-                <tr className="border-b border-gray-200 text-left text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                <tr className={tableHeadRowClass}>
                   <th className="py-2 pr-4 font-medium">
                     {t('charts.history.budget')}
                   </th>
@@ -98,7 +99,7 @@ export function ExpenseHistoryModal({
                       navigate(`/budgets/${entry.budget_id}`);
                     }}
                     title={t('charts.history.openBudget')}
-                    className="cursor-pointer border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-700/50"
+                    className={clickableRowClass}
                   >
                     <td className="py-2 pr-4 text-gray-900 dark:text-gray-100">
                       {formatMonthYear(entry.month, entry.year)}

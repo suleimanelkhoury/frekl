@@ -17,7 +17,7 @@ import { IncomeTable } from '../components/IncomeTable';
 import { Spinner } from '../components/Spinner';
 import { SummaryBar } from '../components/SummaryBar';
 import { invalidateBudgetData, queryKeys } from '../utils/queryKeys';
-import { neutralButtonClass } from '../utils/ui';
+import {neutralButtonClass, pageTitleClass, fieldInputCompactClass} from '../utils/ui';
 import type { Category } from '../types';
 import { CalendarDaysIcon, DownloadIcon, Trash2Icon } from '../components/Icons';
 
@@ -177,7 +177,7 @@ export function BudgetDetailPage() {
           >
             {t('detail.page.backToDashboard')}
           </Link>
-          <h1 className="text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
+          <h1 className={pageTitleClass}>
             {budget.title}
           </h1>
         </div>
@@ -274,7 +274,7 @@ export function BudgetDetailPage() {
               }
               placeholder={t('detail.page.incomeLabelPlaceholder')}
               required
-              className="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              className={`flex-1 ${fieldInputCompactClass}`}
             />
             <input
               type="number"
@@ -287,7 +287,7 @@ export function BudgetDetailPage() {
               }
               placeholder="SOLL"
               step="0.01"
-              className="w-24 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              className={`w-24 ${fieldInputCompactClass}`}
             />
             <input
               type="number"
@@ -300,7 +300,7 @@ export function BudgetDetailPage() {
               }
               placeholder="IST"
               step="0.01"
-              className="w-24 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              className={`w-24 ${fieldInputCompactClass}`}
             />
             <button
               type="submit"
@@ -343,7 +343,7 @@ export function BudgetDetailPage() {
               }
               placeholder={t('detail.page.categoryNamePlaceholder')}
               required
-              className="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              className={`flex-1 ${fieldInputCompactClass}`}
             />
             <button
               type="submit"

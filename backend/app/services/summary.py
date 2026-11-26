@@ -16,6 +16,7 @@ from app.schemas.summary import (
     YearlyComparison,
     YearlyComparisonEntry,
 )
+from app.services.labels import simple_label
 
 
 def _is_investment_category(name: str) -> bool:
@@ -24,7 +25,7 @@ def _is_investment_category(name: str) -> bool:
     The imported template's "Investitionen" category holds the amounts the
     user put into their portfolio (MSCI World, MSCI Emerging Market, BYD, …).
     """
-    return name.strip().lower() in {"investitionen", "investments"}
+    return simple_label(name) in {"investitionen", "investments"}
 
 
 def _is_salary_label(label: str) -> bool:
@@ -34,7 +35,7 @@ def _is_salary_label(label: str) -> bool:
     holds the carryover (SOLL) and additional income like cashback, interest,
     work refunds, and tax refunds (IST).
     """
-    normalized = label.strip().lower()
+    normalized = simple_label(label)
     return normalized in {
         "einkommen",
         "gehalt",

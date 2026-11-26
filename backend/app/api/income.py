@@ -8,6 +8,7 @@ from app.core.deps import get_current_user
 from app.models.income import Income
 from app.models.user import User
 from app.schemas.income import IncomeCreate, IncomeResponse, IncomeUpdate
+from app.services.crud import apply_update
 from app.services.ownership import get_user_budget, get_user_income
 from app.services.touch import touch_budget, touch_budget_by_id
 
@@ -56,9 +57,7 @@ def update_income(
     """Update an income entry's label, projected, or actual amount."""
     income = get_user_income(db, income_id, current_user)
 
-    update_data = income_in.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(income, field, value)
+    apply_update(income, income_in)
 
     touch_budget_by_id(db, income.budget_id)
     db.commit()

@@ -11,14 +11,16 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { budgetsApi } from '../api';
 import { ExpenseHistoryModal } from './ExpenseHistoryModal';
 import { Modal } from './Modal';
 import { Spinner } from './Spinner';
+import { useHistoryDrillDown } from '../hooks/useHistoryDrillDown';
 import { formatCurrency, formatMonthYear } from '../utils/format';
+import { badgeTone } from '../utils/balance';
 import { queryKeys } from '../utils/queryKeys';
+import { clickableRowClass, tableHeadRowClass } from '../utils/ui';
 import type { RecurringItem } from '../types';
 
 /** Trend badge: arrow + change, colored like DifferenceBadge (up =
@@ -27,12 +29,10 @@ function TrendBadge({ item }: { item: RecurringItem }) {
   const { t } = useTranslation();
   if (!item.direction || item.change_pct === null) return null;
 
-  const className =
-    item.direction === 'up'
-      ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-      : item.direction === 'down'
-        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
+  const tone = badgeTone(
+    item.direction === 'up' ? 1 : item.direction === 'down' ? -1 : 0,
+    false,
+  );
   const arrow = item.direction === 'up' ? '▲' : item.direction === 'down' ? '▼' : '→';
   const pct =
     item.direction === 'flat' ? '' : ` ${Math.abs(item.change_pct).toFixed(1)} %`;
@@ -40,7 +40,7 @@ function TrendBadge({ item }: { item: RecurringItem }) {
   return (
     <span
       title={t('settings.subscriptions.trend.hint')}
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium tabular-nums ${className}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium tabular-nums ${tone}`}
     >
       {arrow}
       {pct}
@@ -50,7 +50,7 @@ function TrendBadge({ item }: { item: RecurringItem }) {
 
 export function RecurringItemsModal({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
-  const [historyLabel, setHistoryLabel] = useState<string | null>(null);
+  const history = useHistoryDrillDown();
 
   const { data, isLoading } = useQuery({
     queryKey: queryKeys.recurring,
@@ -74,7 +74,7 @@ export function RecurringItemsModal({ onClose }: { onClose: () => void }) {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200 text-left text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                <tr className={tableHeadRowClass}>
                   <th className="py-2 pr-4 font-medium">
                     {t('settings.subscriptions.columns.label')}
                   </th>
@@ -99,8 +99,8 @@ export function RecurringItemsModal({ onClose }: { onClose: () => void }) {
                 {data.items.map((item) => (
                   <tr
                     key={item.label}
-                    onClick={() => setHistoryLabel(item.label)}
-                    className="cursor-pointer border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-700/50"
+                    onClick={() => history.openFor(item.label)}
+                    className={clickableRowClass}
                   >
                     <td className="py-2 pr-4 font-medium text-gray-900 dark:text-gray-100">
                       {item.label}
@@ -141,11 +141,8 @@ export function RecurringItemsModal({ onClose }: { onClose: () => void }) {
       </Modal>
 
       {/* ── Drill-down: full history of the clicked row ── */}
-      {historyLabel && (
-        <ExpenseHistoryModal
-          label={historyLabel}
-          onClose={() => setHistoryLabel(null)}
-        />
+      {history.label && (
+        <ExpenseHistoryModal label={history.label} onClose={history.close} />
       )}
     </>
   );

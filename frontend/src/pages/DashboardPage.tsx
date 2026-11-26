@@ -16,8 +16,8 @@ import { BudgetCard } from '../components/BudgetCard';
 import { DashboardSummary } from '../components/DashboardSummary';
 import { Spinner } from '../components/Spinner';
 import { emptyBudgetDraft } from '../utils/budgetForm';
-import { queryKeys } from '../utils/queryKeys';
-import { neutralButtonClass, pillButtonClass } from '../utils/ui';
+import { invalidateGlobalBudgetData, queryKeys } from '../utils/queryKeys';
+import {neutralButtonClass, pillButtonClass, pageTitleClass, primaryButtonClass, emptyStateClass, fieldInputClass} from '../utils/ui';
 import type { PrefillStrategy } from '../types';
 import { UploadIcon } from '../components/Icons';
 
@@ -50,13 +50,9 @@ export function DashboardPage() {
     queryFn: budgetsApi.list,
   });
 
-  // Budget creation/import affects every derived view (comparison,
-  // yearly comparison), so all related caches are invalidated together.
-  const invalidateBudgetQueries = () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.budgets });
-    queryClient.invalidateQueries({ queryKey: queryKeys.comparison });
-    queryClient.invalidateQueries({ queryKey: queryKeys.yearlyComparison });
-  };
+  // Budget creation/import affects every derived view, so all related
+  // caches are invalidated together (see queryKeys.ts).
+  const invalidateBudgetQueries = () => invalidateGlobalBudgetData(queryClient);
 
   const createMutation = useMutation({
     mutationFn: budgetsApi.create,
@@ -121,7 +117,7 @@ export function DashboardPage() {
     <div>
       {/* Stacks above sm: title, then full-width action buttons */}
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
+        <h1 className={pageTitleClass}>
           {t('dashboard.title')}
         </h1>
         <div className="flex gap-3">
@@ -133,7 +129,7 @@ export function DashboardPage() {
           </button>
           <button
             onClick={() => setShowCreateForm(true)}
-            className="flex-1 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700 sm:flex-none"
+            className={`flex-1 ${primaryButtonClass} sm:flex-none`}
           >
             {t('dashboard.actions.newBudget')}
           </button>
@@ -159,7 +155,7 @@ export function DashboardPage() {
                 }
                 placeholder={t('dashboard.create.titlePlaceholder')}
                 required
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                className={`w-full ${fieldInputClass}`}
               />
             </div>
             <div className="min-w-24 flex-1">
@@ -174,7 +170,7 @@ export function DashboardPage() {
                     month: parseInt(e.target.value),
                   })
                 }
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                className={`w-full ${fieldInputClass}`}
               >
                 {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                   <option key={m} value={m}>
@@ -195,7 +191,7 @@ export function DashboardPage() {
                 }
                 min="2000"
                 max="2100"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                className={`w-full ${fieldInputClass}`}
               />
             </div>
             <div className="min-w-24 flex-1">
@@ -205,7 +201,7 @@ export function DashboardPage() {
               <select
                 value={effectivePrefill}
                 onChange={(e) => setPrefill(e.target.value as PrefillStrategy)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                className={`w-full ${fieldInputClass}`}
               >
                 <option value="average" disabled={!hasEarlier}>
                   {t('dashboard.create.prefillAverage')}
@@ -220,7 +216,7 @@ export function DashboardPage() {
               <button
                 type="submit"
                 disabled={createMutation.isPending}
-                className="flex-1 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50 sm:flex-none"
+                className={`flex-1 ${primaryButtonClass} sm:flex-none`}
               >
                 {createMutation.isPending
                   ? t('dashboard.create.submitting')
@@ -229,7 +225,7 @@ export function DashboardPage() {
               <button
                 type="button"
                 onClick={() => setShowCreateForm(false)}
-                className="flex-1 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 sm:flex-none"
+                className={`flex-1 ${neutralButtonClass} sm:flex-none`}
               >
                 {t('common.actions.cancel')}
               </button>
@@ -272,7 +268,7 @@ export function DashboardPage() {
           </div>
         </>
       ) : (
-        <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-12 text-center dark:border-gray-700 dark:bg-gray-800">
+        <div className={emptyStateClass}>
           <p className="text-gray-500 dark:text-gray-500">
             {t('dashboard.archive.empty')}
           </p>

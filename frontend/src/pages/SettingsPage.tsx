@@ -20,7 +20,7 @@ import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { RecurringItemsModal } from '../components/RecurringItemsModal';
 import { RestoreBackupModal } from '../components/RestoreBackupModal';
 import { formatDate } from '../utils/format';
-import { neutralButtonClass } from '../utils/ui';
+import {neutralButtonClass, pageTitleClass} from '../utils/ui';
 
 export function SettingsPage() {
   const { user, logout } = useAuth();
@@ -51,7 +51,7 @@ export function SettingsPage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="mb-6 text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
+      <h1 className={pageTitleClass}>
         {t('settings.title')}
       </h1>
 

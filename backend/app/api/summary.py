@@ -1,7 +1,5 @@
 """Summary & reports router — budget totals, category subtotals, and chart data."""
 
-from decimal import Decimal
-
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -69,18 +67,17 @@ def get_chart_data(
     budget = get_user_budget(db, budget_id, current_user)
     summary = calculate_budget_summary(budget, db)
 
-    # Expenses by category (for bar/pie charts)
-    expenses_by_category: list[ChartDataPoint] = []
-    for category in budget.categories:
-        projected = sum((item.projected_cost for item in category.items), Decimal("0"))
-        actual = sum((item.actual_cost for item in category.items), Decimal("0"))
-        expenses_by_category.append(
-            ChartDataPoint(
-                label=category.name,
-                projected=projected,
-                actual=actual,
-            )
+    # Expenses by category (for bar/pie charts) — the per-category
+    # subtotals service already sums SOLL/IST per category.
+    category_summaries = calculate_category_summary(budget, db)
+    expenses_by_category = [
+        ChartDataPoint(
+            label=s.category_name,
+            projected=s.projected_subtotal,
+            actual=s.actual_subtotal,
         )
+        for s in category_summaries.categories
+    ]
 
     # Income vs. expenses (for comparison charts)
     income_vs_expenses = ChartDataPoint(

@@ -20,7 +20,7 @@ money is carried forward month after month.
 """
 
 from dataclasses import dataclass, field
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
@@ -30,6 +30,9 @@ from app.models.expense_item import ExpenseItem
 from app.models.income import Income
 from app.models.user import User
 from app.schemas.budget import BudgetCreate, PrefillStrategy
+from app.services.chronology import chronological_budgets
+from app.services.labels import simple_label
+from app.services.money import quantize_money
 from app.services.summary import _is_salary_label, calculate_budget_summary
 
 # Budgets whose actual spending is averaged in the "average" strategy.
@@ -37,9 +40,6 @@ PREFILL_AVERAGE_WINDOW = 3
 
 # Money is stored with two decimal places; averaged amounts are rounded
 # half-up (the conventional rounding for money).
-_TWO_PLACES = Decimal("0.01")
-
-
 @dataclass
 class PrefillIncome:
     """One income row for the new budget (actual starts at zero)."""
@@ -84,7 +84,7 @@ def history_budgets(
     already exists, it is not used as a source either.
     """
     earlier = [b for b in user.budgets if (b.year, b.month) < (year, month)]
-    earlier.sort(key=lambda b: (b.year, b.month, b.id), reverse=True)
+    earlier = chronological_budgets(earlier, reverse=True)
     return earlier[:count]
 
 
@@ -95,7 +95,7 @@ def _extra_carryover(db: Session, budget: Budget) -> Decimal:
 
 def _is_extra_label(label: str) -> bool:
     """True if an income row is the carryover row ("Extra")."""
-    return label.strip().lower() == "extra"
+    return simple_label(label) == "extra"
 
 
 def _build_last(
@@ -171,7 +171,7 @@ def _build_average(
         for income in budget.incomes:
             if _is_extra_label(income.label):
                 continue  # carryover, never averaged
-            key = income.label.strip().lower()
+            key = simple_label(income.label)
             entry = income_acc.get(key)
             if entry is None:
                 income_acc[key] = [
@@ -197,9 +197,7 @@ def _build_average(
         content.incomes.append(
             PrefillIncome(
                 label=label,
-                projected_amount=(
-                    summed / window_size
-                ).quantize(_TWO_PLACES, rounding=ROUND_HALF_UP),
+                projected_amount=quantize_money(summed / window_size),
             )
         )
 
@@ -212,11 +210,11 @@ def _build_average(
     order = 0
     for budget in window:
         for category in budget.categories:
-            cat_key = category.name.strip().lower()
+            cat_key = simple_label(category.name)
             cat_order.setdefault(cat_key, order)
             order += 1
             for item in category.items:
-                item_key = item.label.strip().lower()
+                item_key = simple_label(item.label)
                 acc_key = (cat_key, item_key)
                 entry = item_acc.get(acc_key)
                 if entry is None:
@@ -254,9 +252,7 @@ def _build_average(
             prefill_category.items.append(
                 PrefillItem(
                     label=entry["label"],
-                    projected_cost=(
-                        entry["sum"] / window_size
-                    ).quantize(_TWO_PLACES, rounding=ROUND_HALF_UP),
+                    projected_cost=quantize_money(entry["sum"] / window_size),
                 )
             )
         content.categories.append(prefill_category)

@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { searchApi } from '../api';
 import { ExpenseHistoryModal } from './ExpenseHistoryModal';
+import { useHistoryDrillDown } from '../hooks/useHistoryDrillDown';
 import { SearchIcon, XIcon } from './Icons';
 import { queryKeys } from '../utils/queryKeys';
 import { formatMonthYear } from '../utils/format';
@@ -53,7 +54,7 @@ export function GlobalSearch() {
   // Phones: the full-screen search sheet (opened via the header icon)
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetClosing, setSheetClosing] = useState(false);
-  const [historyLabel, setHistoryLabel] = useState<string | null>(null);
+  const history = useHistoryDrillDown();
 
   const DROPDOWN_MS = 140;
   const SHEET_MS = 180;
@@ -195,7 +196,7 @@ export function GlobalSearch() {
                 key={`i-${hit.label}-${index}`}
                 onClick={() => {
                   close();
-                  setHistoryLabel(hit.label);
+                  history.openFor(hit.label);
                 }}
               >
                 <span className="font-medium text-gray-900 dark:text-gray-100">
@@ -317,11 +318,8 @@ export function GlobalSearch() {
       )}
 
       {/* ── Drill-down for item hits ──────────────── */}
-      {historyLabel && (
-        <ExpenseHistoryModal
-          label={historyLabel}
-          onClose={() => setHistoryLabel(null)}
-        />
+      {history.label && (
+        <ExpenseHistoryModal label={history.label} onClose={history.close} />
       )}
     </>
   );

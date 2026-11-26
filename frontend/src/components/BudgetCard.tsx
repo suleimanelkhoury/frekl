@@ -13,7 +13,7 @@ import { useTranslation, Trans } from 'react-i18next';
 import { formatCurrency, formatMonthYear } from '../utils/format';
 import { toNumber } from '../utils/format';
 import { balanceColor } from '../utils/balance';
-import { queryKeys } from '../utils/queryKeys';
+import { invalidateGlobalBudgetData, queryKeys } from '../utils/queryKeys';
 import { ConfirmDialog } from './ConfirmDialog';
 import type { Budget } from '../types';
 import { DownloadIcon, Trash2Icon } from './Icons';
@@ -51,9 +51,7 @@ export function BudgetCard({
         year: nextYear,
       }),
     onSuccess: (newBudget) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.budgets });
-      queryClient.invalidateQueries({ queryKey: queryKeys.comparison });
-      queryClient.invalidateQueries({ queryKey: queryKeys.yearlyComparison });
+      invalidateGlobalBudgetData(queryClient);
       navigate(`/budgets/${newBudget.id}`);
     },
   });
@@ -65,10 +63,7 @@ export function BudgetCard({
       // inactivates its summary query. We don't removeQueries on the
       // summary query because this card actively observes it (removing
       // an observed query triggers a refetch → 404).
-      queryClient.invalidateQueries({ queryKey: queryKeys.budgets });
-      // The comparison strips aggregate budget data — refresh them too
-      queryClient.invalidateQueries({ queryKey: queryKeys.comparison });
-      queryClient.invalidateQueries({ queryKey: queryKeys.yearlyComparison });
+      invalidateGlobalBudgetData(queryClient);
     },
   });
 

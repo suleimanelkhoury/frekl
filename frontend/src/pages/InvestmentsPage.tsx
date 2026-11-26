@@ -13,7 +13,6 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Area,
@@ -32,16 +31,27 @@ import { ExpenseHistoryModal } from '../components/ExpenseHistoryModal';
 import { ChartContainer } from '../components/ChartContainer';
 import { Spinner } from '../components/Spinner';
 import { useIsMobile } from '../hooks/useIsMobile';
-import { CHART_TOOLTIP_STYLE, LEGEND_PROPS, SERIES_COLORS } from '../utils/chartTheme';
+import { useHistoryDrillDown } from '../hooks/useHistoryDrillDown';
 import { formatCurrency, formatMonthYear, toNumber } from '../utils/format';
 import { queryKeys } from '../utils/queryKeys';
+import {
+  currencyTooltipProps,
+  gridProps,
+  LEGEND_PROPS,
+  makeYearTickFormatter,
+  SERIES_COLORS,
+  timeXAxisProps,
+  timeYAxisProps,
+} from '../utils/chartTheme';
+import {pageTitleClass, tableHeadRowClass, clickableRowClass} from '../utils/ui';
 
 export function InvestmentsPage() {
   const { t } = useTranslation();
   // Phone adaptation for chart geometry (see useIsMobile): lower plot
   // baselines so the charts don't tower over their information density.
   const isMobile = useIsMobile();
-  const [historyLabel, setHistoryLabel] = useState<string | null>(null);
+  // Row label clicked in the per-investment table (opens its history)
+  const history = useHistoryDrillDown();
 
   const { data, isLoading } = useQuery({
     queryKey: queryKeys.investments,
@@ -53,7 +63,7 @@ export function InvestmentsPage() {
   if (!data || data.months.length === 0) {
     return (
       <div>
-        <h1 className="mb-6 text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
+        <h1 className={pageTitleClass}>
           {t('investments.title')}
         </h1>
         <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-12 text-center dark:border-gray-700 dark:bg-gray-800">
@@ -80,13 +90,7 @@ export function InvestmentsPage() {
   // On phones, only the first month of each year is labeled — with the
   // year itself — every other month stays a plain tick (same rule as
   // ChartsPage). Desktop keeps full month labels.
-  const yearTickFormatter = (value: string, index: number) => {
-    if (!isMobile) return value;
-    const entry = chartData[index];
-    return index === 0 || entry.year !== chartData[index - 1]?.year
-      ? String(entry.year)
-      : '';
-  };
+  const yearTickFormatter = makeYearTickFormatter(chartData, isMobile);
 
   // ── Stats ────────────────────────────────────
   const total = toNumber(data.total);
@@ -99,7 +103,7 @@ export function InvestmentsPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
+      <h1 className={pageTitleClass}>
         {t('investments.title')}
       </h1>
 
@@ -163,18 +167,10 @@ export function InvestmentsPage() {
                   />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis
-                dataKey="label"
-                fontSize={12}
-                tickSize={3}
-                tickFormatter={yearTickFormatter}
-              />
-              <YAxis fontSize={12} />
-              <Tooltip
-                formatter={(value) => formatCurrency(Number(value))}
-                contentStyle={CHART_TOOLTIP_STYLE}
-              />
+              <CartesianGrid {...gridProps} />
+              <XAxis {...timeXAxisProps(yearTickFormatter)} />
+              <YAxis {...timeYAxisProps} />
+              <Tooltip {...currencyTooltipProps} />
               <Area
                 type="monotone"
                 dataKey="cumulative"
@@ -193,18 +189,10 @@ export function InvestmentsPage() {
         <ChartContainer title={t('investments.charts.monthly')}>
           <ResponsiveContainer width="100%" height={isMobile ? 240 : 350}>
             <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis
-                dataKey="label"
-                fontSize={12}
-                tickSize={3}
-                tickFormatter={yearTickFormatter}
-              />
-              <YAxis fontSize={12} />
-              <Tooltip
-                formatter={(value) => formatCurrency(Number(value))}
-                contentStyle={CHART_TOOLTIP_STYLE}
-              />
+              <CartesianGrid {...gridProps} />
+              <XAxis {...timeXAxisProps(yearTickFormatter)} />
+              <YAxis {...timeYAxisProps} />
+              <Tooltip {...currencyTooltipProps} />
               <Legend {...LEGEND_PROPS} />
               <Bar
                 dataKey="projected"
@@ -239,7 +227,7 @@ export function InvestmentsPage() {
                 history table) */}
             <table className="w-full text-xs sm:text-sm">
               <thead>
-                <tr className="border-b border-gray-200 text-left text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                <tr className={tableHeadRowClass}>
                   <th className="py-2 pr-4 font-medium">
                     {t('investments.items.columns.label')}
                   </th>
@@ -257,8 +245,8 @@ export function InvestmentsPage() {
                 {data.items.map((item) => (
                   <tr
                     key={item.label}
-                    onClick={() => setHistoryLabel(item.label)}
-                    className="cursor-pointer border-b border-gray-100 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-700/50"
+                    onClick={() => history.openFor(item.label)}
+                    className={clickableRowClass}
                   >
                     <td className="py-2 pr-4 font-medium text-gray-900 dark:text-gray-100">
                       {item.label}
@@ -280,11 +268,8 @@ export function InvestmentsPage() {
       </ChartContainer>
 
       {/* ── Drill-down: full history of the clicked investment ── */}
-      {historyLabel && (
-        <ExpenseHistoryModal
-          label={historyLabel}
-          onClose={() => setHistoryLabel(null)}
-        />
+      {history.label && (
+        <ExpenseHistoryModal label={history.label} onClose={history.close} />
       )}
     </div>
   );

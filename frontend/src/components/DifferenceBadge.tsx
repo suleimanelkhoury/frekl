@@ -7,6 +7,7 @@
 
 import { formatCurrency } from '../utils/format';
 import { toNumber } from '../utils/format';
+import { badgeTone } from '../utils/balance';
 
 interface DifferenceBadgeProps {
   /** The difference value as a string (e.g. "50.00" or "-30.00"). */
@@ -20,20 +21,12 @@ export function DifferenceBadge({
   showSign = true,
 }: DifferenceBadgeProps) {
   const num = toNumber(value);
-  const isPositive = num > 0;
-  const isNegative = num < 0;
-
-  const className = isPositive
-    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-    : isNegative
-      ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-      : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
 
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${className}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${badgeTone(num, true)}`}
     >
-      {showSign && isPositive ? '+' : ''}{formatCurrency(value)}
+      {showSign && num > 0 ? '+' : ''}{formatCurrency(value)}
     </span>
   );
 }

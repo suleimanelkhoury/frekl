@@ -39,13 +39,23 @@ import { ChartContainer } from '../components/ChartContainer';
 import { ExpenseHistoryModal } from '../components/ExpenseHistoryModal';
 import { Spinner } from '../components/Spinner';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { useHistoryDrillDown } from '../hooks/useHistoryDrillDown';
 import { formatCurrency, formatMonthYear, toNumber } from '../utils/format';
-import { pillButtonClass } from '../utils/ui';import { queryKeys } from '../utils/queryKeys';
+import {pillButtonClass, pageTitleClass} from '../utils/ui';import { queryKeys } from '../utils/queryKeys';
 import {
-  CHART_TOOLTIP_STYLE,
+  categoryYAxisProps,
+  currencyTooltipProps,
+  gridProps,
   LEGEND_PROPS,
+  lineDot,
+  makeYearTickFormatter,
+  numberXAxisProps,
   PIE_COLORS,
+  rowsHeight,
   SERIES_COLORS,
+  timeXAxisProps,
+  timeYAxisProps,
+  vBarMargin,
 } from '../utils/chartTheme';
 
 type ChartTab = 'overall' | 'monthly';
@@ -124,7 +134,7 @@ export function ChartsPage() {
   const [selectedBudgetId, setSelectedBudgetId] = useState<number | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   // Row label clicked in the top-expenses chart (opens its history)
-  const [historyLabel, setHistoryLabel] = useState<string | null>(null);
+  const history = useHistoryDrillDown();
 
   const { data: budgets } = useQuery({
     queryKey: queryKeys.budgets,
@@ -169,26 +179,12 @@ export function ChartsPage() {
     topItems?.items.map((i) => ({ label: i.label, value: toNumber(i.total) })) ??
     [];
 
-  // ── Mobile x-axis: year-change ticks ─────────
-  // Month labels crowd a phone-width axis (only ~3 random labels fit).
-  // Instead, on phones only the first month of each year is labeled —
-  // with the year itself ("2025") — and every other month renders as
-  // a plain tick. Desktop keeps the full month labels.
-  const yearTickFormatter = (value: string, index: number) => {
-    if (!isMobile) return value;
-    const entry = overallData[index];
-    return index === 0 || entry.year !== overallData[index - 1]?.year
-      ? String(entry.year)
-      : '';
-  };
-
-  // ── Mobile y-axis: truncated category names ──
-  // The category axis reserves only ~96px on phones; long names
-  // ("MSCI Emerging Market") eat a third of the plot width. Truncate
-  // to 10 characters with an ellipsis on phones — the full name stays
-  // in the tooltip.
-  const truncateTick = (value: string) =>
-    isMobile && value.length > 10 ? `${value.slice(0, 9)}…` : value;
+  // ── Mobile x-axis tick formatters ────────────
+  // Shared factories in chartTheme: on phones, time axes label only
+  // the first month of each year (with the year itself) and category
+  // names longer than 10 characters are truncated (the full name
+  // stays in the tooltip). Desktop keeps full labels.
+  const yearTickFormatter = makeYearTickFormatter(overallData, isMobile);
 
   // Custom bar shape for the top-items chart: gold/silver/bronze for
   // the top three (with a darker border of their own color), brand
@@ -260,10 +256,7 @@ export function ChartsPage() {
   // align (the bar chart scales with the number of categories). Lower
   // baseline on phones — 350px of plot for ~300px width carries no
   // extra information, it just scrolls.
-  const chartHeight = Math.max(
-    isMobile ? 240 : 350,
-    activeCategories.length * (isMobile ? 24 : 34) + 60,
-  );
+  const chartHeight = rowsHeight(activeCategories.length, isMobile, 240);
 
   const selectCategory = (name: string | undefined) => {
     if (!name) return;
@@ -272,7 +265,7 @@ export function ChartsPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
+      <h1 className={pageTitleClass}>
         {t('charts.title')}
       </h1>
 
@@ -310,18 +303,10 @@ export function ChartsPage() {
             <ChartContainer title={t('charts.charts.incomeVsExpenses.title')}>
               <ResponsiveContainer width="100%" height={isMobile ? 240 : 350}>
                 <LineChart data={overallData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="label"
-                    fontSize={12}
-                    tickSize={3}
-                    tickFormatter={yearTickFormatter}
-                  />
-                  <YAxis fontSize={12} />
-                  <Tooltip
-                    formatter={(value) => formatCurrency(Number(value))}
-                    contentStyle={CHART_TOOLTIP_STYLE}
-                  />
+                  <CartesianGrid {...gridProps} />
+                  <XAxis {...timeXAxisProps(yearTickFormatter)} />
+                  <YAxis {...timeYAxisProps} />
+                  <Tooltip {...currencyTooltipProps} />
                   <Legend {...LEGEND_PROPS} />
                   <Line
                     type="monotone"
@@ -329,7 +314,7 @@ export function ChartsPage() {
                     name={t('charts.series.incomeGehaltExtra')}
                     stroke={SERIES_COLORS.Income}
                     strokeWidth={2}
-                    dot={{ r: isMobile ? 2.5 : 4 }}
+                    dot={lineDot(isMobile)}
                   />
                   <Line
                     type="monotone"
@@ -337,7 +322,7 @@ export function ChartsPage() {
                     name={t('charts.series.expensesActual')}
                     stroke={SERIES_COLORS.Expenses}
                     strokeWidth={2}
-                    dot={{ r: isMobile ? 2.5 : 4 }}
+                    dot={lineDot(isMobile)}
                   />
                   <Line
                     type="monotone"
@@ -361,18 +346,10 @@ export function ChartsPage() {
             <ChartContainer title={t('charts.charts.balance.title')}>
               <ResponsiveContainer width="100%" height={isMobile ? 240 : 350}>
                 <LineChart data={overallData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="label"
-                    fontSize={12}
-                    tickSize={3}
-                    tickFormatter={yearTickFormatter}
-                  />
-                  <YAxis fontSize={12} />
-                  <Tooltip
-                    formatter={(value) => formatCurrency(Number(value))}
-                    contentStyle={CHART_TOOLTIP_STYLE}
-                  />
+                  <CartesianGrid {...gridProps} />
+                  <XAxis {...timeXAxisProps(yearTickFormatter)} />
+                  <YAxis {...timeYAxisProps} />
+                  <Tooltip {...currencyTooltipProps} />
                   <Legend {...LEGEND_PROPS} />
                   <ReferenceLine y={0} stroke="#9ca3af" strokeDasharray="4 4" />
                   <Line
@@ -381,7 +358,7 @@ export function ChartsPage() {
                     name={t('charts.series.balanceActual')}
                     stroke={SERIES_COLORS.Balance}
                     strokeWidth={2}
-                    dot={{ r: isMobile ? 2.5 : 4 }}
+                    dot={lineDot(isMobile)}
                   />
                   <Line
                     type="monotone"
@@ -401,33 +378,17 @@ export function ChartsPage() {
               <ChartContainer title={t('charts.charts.topExpenses.title')}>
                 <ResponsiveContainer
                   width="100%"
-                  height={Math.max(
-                    isMobile ? 200 : 350,
-                    topItemsData.length * (isMobile ? 24 : 34) + 60,
-                  )}
+                  height={rowsHeight(topItemsData.length, isMobile, 200)}
                 >
                   <BarChart
                     data={topItemsData}
                     layout="vertical"
-                    // On phones the y-axis line sits closer to the card
-                    // edge to give the plot more width (the margin sits
-                    // between the card edge and the axis, so growing it
-                    // moves the line right). Desktop keeps the default.
-                    margin={{ left: isMobile ? -14 : 8, right: 24 }}
+                    margin={vBarMargin(isMobile)}
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis type="number" fontSize={12} />
-                    <YAxis
-                      type="category"
-                      dataKey="label"
-                      width={isMobile ? 96 : 130}
-                      fontSize={12}
-                      tickFormatter={truncateTick}
-                    />
-                    <Tooltip
-                      formatter={(value) => formatCurrency(Number(value))}
-                      contentStyle={CHART_TOOLTIP_STYLE}
-                    />
+                    <CartesianGrid {...gridProps} />
+                    <XAxis {...numberXAxisProps} />
+                    <YAxis {...categoryYAxisProps('label', isMobile)} />
+                    <Tooltip {...currencyTooltipProps} />
                     <Bar
                       dataKey="value"
                       name={t('charts.series.spentIst')}
@@ -437,7 +398,7 @@ export function ChartsPage() {
                       shape={renderTopItemBar}
                       radius={[0, 4, 4, 0]}
                       onClick={(data) =>
-                        setHistoryLabel(
+                        history.openFor(
                           (data as { label?: string })?.label ?? null,
                         )
                       }
@@ -515,20 +476,11 @@ export function ChartsPage() {
                   <BarChart
                     data={activeCategories}
                     layout="vertical"
-                    margin={{ left: isMobile ? -14 : 8, right: 24 }}
+                    margin={vBarMargin(isMobile)}
                   >
-                    <XAxis type="number" fontSize={12} />
-                    <YAxis
-                      type="category"
-                      dataKey="label"
-                      width={isMobile ? 96 : 130}
-                      fontSize={12}
-                      tickFormatter={truncateTick}
-                    />
-                    <Tooltip
-                      formatter={(value) => formatCurrency(Number(value))}
-                      contentStyle={CHART_TOOLTIP_STYLE}
-                    />
+                    <XAxis {...numberXAxisProps} />
+                    <YAxis {...categoryYAxisProps('label', isMobile)} />
+                    <Tooltip {...currencyTooltipProps} />
                     <Legend {...LEGEND_PROPS} />
                     <Bar
                       dataKey="projected"
@@ -591,10 +543,7 @@ export function ChartsPage() {
                         />
                       ))}
                     </Pie>
-                    <Tooltip
-                      formatter={(value) => formatCurrency(Number(value))}
-                      contentStyle={CHART_TOOLTIP_STYLE}
-                    />
+                    <Tooltip {...currencyTooltipProps} />
                     <Legend {...LEGEND_PROPS} />
                   </PieChart>
                 </ResponsiveContainer>
@@ -609,21 +558,12 @@ export function ChartsPage() {
                   <BarChart
                     data={varianceData}
                     layout="vertical"
-                    margin={{ left: isMobile ? -14 : 8, right: 24 }}
+                    margin={vBarMargin(isMobile)}
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis type="number" fontSize={12} />
-                    <YAxis
-                      type="category"
-                      dataKey="label"
-                      width={isMobile ? 96 : 130}
-                      fontSize={12}
-                      tickFormatter={truncateTick}
-                    />
-                    <Tooltip
-                      formatter={(value) => formatCurrency(Number(value))}
-                      contentStyle={CHART_TOOLTIP_STYLE}
-                    />
+                    <CartesianGrid {...gridProps} />
+                    <XAxis {...numberXAxisProps} />
+                    <YAxis {...categoryYAxisProps('label', isMobile)} />
+                    <Tooltip {...currencyTooltipProps} />
                     <ReferenceLine x={0} stroke={SERIES_COLORS.Plan} />
                     <Bar
                       dataKey="variance"
@@ -689,10 +629,10 @@ export function ChartsPage() {
       )}
 
       {/* ── Expense history modal (overall tab, top-expenses chart) */}
-      {historyLabel && (
+      {history.label && (
         <ExpenseHistoryModal
-          label={historyLabel}
-          onClose={() => setHistoryLabel(null)}
+          label={history.label}
+          onClose={history.close}
         />
       )}
     </div>

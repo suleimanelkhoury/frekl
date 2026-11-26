@@ -4,6 +4,8 @@
  * CategoryDrillDownModal, and InvestmentsPage.
  */
 
+import { formatCurrency } from './format';
+
 /** Palette used to color pie slices (cycled).
  *
  * Muted, warm-leaning categorical colors — dusty earth tones chosen to
@@ -63,3 +65,93 @@ export const LEGEND_PROPS = {
   iconSize: 10,
   wrapperStyle: { fontSize: '0.75rem', lineHeight: '1.35' },
 } as const;
+
+/* ── Shared chart building blocks ───────────── */
+/* Recharts 3 registers axes/tooltips by mount-time dispatch, but to
+ * stay off its internals these are shared as props objects and pure
+ * factories — spread them into the JSX children directly. */
+
+/** Currency tooltip props — `<Tooltip {...currencyTooltipProps} />`.
+ * Values arrive as strings/numbers (Recharts types them loosely, hence
+ * the unknown param); formatCurrency handles both. */
+export const currencyTooltipProps = {
+  formatter: (value: unknown) => formatCurrency(Number(value)),
+  contentStyle: CHART_TOOLTIP_STYLE,
+} as const;
+
+/** Identical dashed grid on every chart. */
+export const gridProps = {
+  strokeDasharray: '3 3',
+  stroke: '#e5e7eb',
+} as const;
+
+/** Margin for vertical-layout (horizontal bar) charts. Phones pull the
+ * y-axis line toward the card edge for more plot width. */
+export const vBarMargin = (isMobile: boolean) => ({
+  left: isMobile ? -14 : 8,
+  right: 24,
+});
+
+/** Height for row-based bar charts: a baseline for few rows, growing
+ * 24px (phone) / 34px (desktop) per row. */
+export const rowsHeight = (
+  rows: number,
+  isMobile: boolean,
+  mobileBase: number,
+  desktopBase = 350,
+) => Math.max(isMobile ? mobileBase : desktopBase, rows * (isMobile ? 24 : 34) + 60);
+
+/** X-axis for time-series charts: half-size ticks; on phones only the
+ * first month of each year is labeled — with the year itself — every
+ * other month renders as a plain tick (data entries must carry their
+ * `year`). Desktop keeps full month labels. */
+export const makeYearTickFormatter =
+  (data: { year: number }[], isMobile: boolean) =>
+  (value: string, index: number): string => {
+    if (!isMobile) return value;
+    return index === 0 || data[index]?.year !== data[index - 1]?.year
+      ? String(data[index]?.year ?? '')
+      : '';
+  };
+
+/** Tick formatter factory for category names: on phones, names longer
+ * than `max` characters are truncated with an ellipsis (the full name
+ * stays in the tooltip). */
+export const makeTruncateTick =
+  (isMobile: boolean, max = 10) =>
+  (value: string): string =>
+    isMobile && value.length > max ? `${value.slice(0, max - 1)}…` : value;
+
+/** Y-axis props for vertical-layout bar charts (category names on the
+ * left). Phones reserve less width and truncate long names. */
+export const categoryYAxisProps = (dataKey: string, isMobile: boolean) => ({
+  type: 'category' as const,
+  dataKey,
+  width: isMobile ? 96 : 130,
+  fontSize: 12,
+  tickFormatter: makeTruncateTick(isMobile),
+});
+
+/** Numeric x-axis for vertical-layout bar charts. */
+export const numberXAxisProps = {
+  type: 'number' as const,
+  fontSize: 12,
+} as const;
+
+/** X-axis props for time-series charts (label + tick size + year
+ * formatter for phones). */
+export const timeXAxisProps = (
+  tickFormatter: (value: string, index: number) => string,
+) => ({
+  dataKey: 'label',
+  fontSize: 12,
+  tickSize: 3,
+  tickFormatter,
+});
+
+/** Y-axis props for time-series charts. */
+export const timeYAxisProps = { fontSize: 12 } as const;
+
+/** Line-chart dot sizing — big enough to read on desktop, small
+ * enough not to overlap on a phone. */
+export const lineDot = (isMobile: boolean) => ({ r: isMobile ? 2.5 : 4 });

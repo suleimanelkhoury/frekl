@@ -42,3 +42,21 @@ export function invalidateBudgetData(
     queryKey: queryKeys.budget.summary(budgetId),
   });
 }
+
+/**
+ * Invalidate every AGGREGATE view derived from the budget list —
+ * call after budgets are created, cloned, deleted, or restored:
+ * the list itself, the comparisons, and the derived recurring /
+ * investments views.
+ */
+export function invalidateGlobalBudgetData(queryClient: QueryClient): void {
+  for (const key of [
+    queryKeys.budgets,
+    queryKeys.comparison,
+    queryKeys.yearlyComparison,
+    queryKeys.recurring,
+    queryKeys.investments,
+  ]) {
+    queryClient.invalidateQueries({ queryKey: key });
+  }
+}

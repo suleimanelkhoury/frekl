@@ -23,23 +23,17 @@ The display spelling and category follow the most recent occurrence.
 """
 
 from collections import Counter
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal
 
 from app.models.user import User
 from app.schemas.summary import RecurringItem, RecurringResponse
-from app.services.analysis import _normalize_label
+from app.services.chronology import chronological_budgets
+from app.services.labels import normalize_label
+from app.services.money import quantize_money
 
 # A row must appear in at least this many distinct months to have
 # detectable cadence at all.
 MIN_MONTHS = 2
-
-_TWO_PLACES = Decimal("0.01")
-
-
-def _quantize(value: Decimal) -> Decimal:
-    """Round money to two decimal places, half-up."""
-    return value.quantize(_TWO_PLACES, rounding=ROUND_HALF_UP)
-
 
 def _cadence(months: set[int]) -> int | None:
     """Detect the regular interval (in months) of a row's occurrences.
@@ -78,11 +72,11 @@ def recurring_user_items(user: User) -> RecurringResponse:
     # chronologically (budgets are sorted by year/month), so the trend
     # halves below split cleanly into earliest and latest.
     acc: dict[str, dict] = {}
-    budgets = sorted(user.budgets, key=lambda b: (b.year, b.month, b.id))
+    budgets = chronological_budgets(user.budgets)
     for budget in budgets:
         for category in budget.categories:
             for item in category.items:
-                key = _normalize_label(item.label)
+                key = normalize_label(item.label)
                 entry = acc.setdefault(
                     key,
                     {
@@ -130,8 +124,8 @@ def recurring_user_items(user: User) -> RecurringResponse:
             late_sum = sum(
                 (cost for _, _, cost in entries[n - half :]), Decimal("0")
             )
-            early_avg = _quantize(early_sum / half)
-            late_avg = _quantize(late_sum / half)
+            early_avg = quantize_money(early_sum / half)
+            late_avg = quantize_money(late_sum / half)
             if late_avg > early_avg:
                 direction = "up"
             elif late_avg < early_avg:
@@ -153,8 +147,8 @@ def recurring_user_items(user: User) -> RecurringResponse:
                 first_year=first_year,
                 last_month=last_month,
                 last_year=last_year,
-                total_actual=_quantize(e["total"]),
-                avg_actual=_quantize(e["total"] / e["occurrences"]),
+                total_actual=quantize_money(e["total"]),
+                avg_actual=quantize_money(e["total"] / e["occurrences"]),
                 cadence_months=cadence,
                 early_avg=early_avg,
                 late_avg=late_avg,

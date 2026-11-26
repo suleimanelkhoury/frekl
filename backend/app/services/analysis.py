@@ -11,6 +11,8 @@ from decimal import Decimal
 from difflib import SequenceMatcher
 
 from app.models.user import User
+from app.services.chronology import chronological_budgets
+from app.services.labels import normalize_label
 from app.schemas.summary import (
     BudgetAnalysisResponse,
     RowUsage,
@@ -24,11 +26,6 @@ from app.schemas.summary import (
 SIMILARITY_THRESHOLD = 0.8
 
 
-def _normalize_label(label: str) -> str:
-    """Lowercase and collapse whitespace — the baseline for comparing."""
-    return " ".join(label.strip().lower().split())
-
-
 def analyze_user_labels(user: User) -> BudgetAnalysisResponse:
     """Analyze every expense row label across ALL of the user's budgets."""
     # Raw label -> accumulated stats. Raw spelling is kept distinct so
@@ -36,7 +33,7 @@ def analyze_user_labels(user: User) -> BudgetAnalysisResponse:
     # merging (the top-items ranking merges case-insensitively; this
     # analysis is exactly the place to expose them).
     stats: dict[str, dict] = {}
-    budgets = sorted(user.budgets, key=lambda b: (b.year, b.month, b.id))
+    budgets = chronological_budgets(user.budgets)
     for budget in budgets:
         for category in budget.categories:
             for item in category.items:
@@ -76,7 +73,7 @@ def analyze_user_labels(user: User) -> BudgetAnalysisResponse:
     # Cluster distinct raw labels whose normalized names are very
     # similar (union-find over pairwise SequenceMatcher ratios)
     labels = list(stats)
-    normalized = {label: _normalize_label(label) for label in labels}
+    normalized = {label: normalize_label(label) for label in labels}
     parent = {label: label for label in labels}
 
     def find(x: str) -> str:

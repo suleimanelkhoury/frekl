@@ -13,6 +13,7 @@ import { invalidateBudgetData } from '../utils/queryKeys';
 import { balanceColor } from '../utils/balance';
 import { formatCurrency, formatDifference } from '../utils/format';
 import { toNumber } from '../utils/format';
+import { fieldInputCompactClass } from '../utils/ui';
 import { ExpenseItemRow } from './ExpenseItemRow';
 import type { Category } from '../types';
 import { Trash2Icon } from './Icons';
@@ -104,7 +105,7 @@ export function CategorySection({ category, budgetId }: CategorySectionProps) {
             onChange={(e) => setNewItem({ ...newItem, label: e.target.value })}
             placeholder={t('detail.category.itemPlaceholder')}
             required
-            className="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+            className={`flex-1 ${fieldInputCompactClass}`}
           />
           <input
             type="number"
@@ -114,7 +115,7 @@ export function CategorySection({ category, budgetId }: CategorySectionProps) {
             }
             placeholder="SOLL"
             step="0.01"
-            className="w-24 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+            className={`w-24 ${fieldInputCompactClass}`}
           />
           <input
             type="number"
@@ -124,7 +125,7 @@ export function CategorySection({ category, budgetId }: CategorySectionProps) {
             }
             placeholder="IST"
             step="0.01"
-            className="w-24 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+            className={`w-24 ${fieldInputCompactClass}`}
           />
           <button
             type="submit"

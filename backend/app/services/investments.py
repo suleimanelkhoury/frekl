@@ -17,6 +17,8 @@ from app.schemas.investments import (
     InvestmentMonth,
     InvestmentsResponse,
 )
+from app.services.chronology import chronological_budgets
+from app.services.labels import simple_label
 from app.services.summary import _is_investment_category
 
 
@@ -28,7 +30,7 @@ def investment_overview(user: User) -> InvestmentsResponse:
     # key (lowercased label) -> [total, occurrences, most recent label]
     item_acc: dict[str, list] = {}
 
-    budgets = sorted(user.budgets, key=lambda b: (b.year, b.month, b.id))
+    budgets = chronological_budgets(user.budgets)
     for budget in budgets:
         projected = Decimal("0")
         actual = Decimal("0")
@@ -38,7 +40,7 @@ def investment_overview(user: User) -> InvestmentsResponse:
             for item in category.items:
                 projected += item.projected_cost
                 actual += item.actual_cost
-                key = item.label.strip().lower()
+                key = simple_label(item.label)
                 entry = item_acc.setdefault(
                     key, [Decimal("0"), 0, item.label]
                 )

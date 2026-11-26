@@ -23,8 +23,13 @@ import { Modal } from './Modal';
 import { Spinner } from './Spinner';
 import { balanceColor } from '../utils/balance';
 import { formatCurrency, formatMonthShort, toNumber } from '../utils/format';
-import { CHART_TOOLTIP_STYLE, LEGEND_PROPS, SERIES_COLORS } from '../utils/chartTheme';
+import {
+  currencyTooltipProps,
+  LEGEND_PROPS,
+  SERIES_COLORS,
+} from '../utils/chartTheme';
 import { queryKeys } from '../utils/queryKeys';
+import { tableHeadRowClass } from '../utils/ui';
 
 interface CategoryDrillDownModalProps {
   budgetId: number;
@@ -83,7 +88,7 @@ export function CategoryDrillDownModal({
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 text-left text-gray-500 dark:border-gray-700 dark:text-gray-400">
+              <tr className={tableHeadRowClass}>
                 <th className="py-2 pr-4 font-medium">{t('detail.drillDown.item')}</th>
                 <th className="py-2 font-medium text-right">SOLL</th>
                 <th className="py-2 font-medium text-right">IST</th>
@@ -129,10 +134,7 @@ export function CategoryDrillDownModal({
             <LineChart data={trendSeries} margin={{ left: 8, right: 24 }}>
               <XAxis dataKey="name" fontSize={11} />
               <YAxis fontSize={11} />
-              <Tooltip
-                formatter={(value) => formatCurrency(Number(value))}
-                contentStyle={CHART_TOOLTIP_STYLE}
-              />
+              <Tooltip {...currencyTooltipProps} />
               <Legend {...LEGEND_PROPS} />
               <Line
                 type="monotone"

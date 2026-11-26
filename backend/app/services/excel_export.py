@@ -46,6 +46,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.budget import Budget
+from app.services.excel_layout import GERMAN_MONTH_NAMES
 from app.models.category import Category
 
 # ── Fonts / colors matching the original template ──
@@ -101,21 +102,6 @@ COLUMN_WIDTHS = {
     "J": 12.57,  # right Unterschied / totals
     "K": 2.71,   # right spacer
 }
-
-GERMAN_MONTH_NAMES = [
-    "Januar",
-    "Februar",
-    "März",
-    "April",
-    "Mai",
-    "Juni",
-    "Juli",
-    "August",
-    "September",
-    "Oktober",
-    "November",
-    "Dezember",
-]
 
 # English table names used by the template for the category tables
 TABLE_NAMES = [

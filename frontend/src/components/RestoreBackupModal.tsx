@@ -13,7 +13,8 @@ import { useTranslation } from 'react-i18next';
 import { backupApi } from '../api';
 import { Modal } from './Modal';
 import { formatDateTime } from '../utils/format';
-import { queryKeys } from '../utils/queryKeys';
+import { invalidateGlobalBudgetData } from '../utils/queryKeys';
+import {primaryButtonClass, neutralButtonClass, fieldInputClass} from '../utils/ui';
 import type { RestoreMode } from '../types';
 
 interface ParsedBackup {
@@ -40,15 +41,7 @@ export function RestoreBackupModal({ onClose }: { onClose: () => void }) {
     mutationFn: () => backupApi.restore(backup, mode),
     onSuccess: (response) => {
       // A restore changes every derived view.
-      for (const key of [
-        queryKeys.budgets,
-        queryKeys.comparison,
-        queryKeys.yearlyComparison,
-        queryKeys.recurring,
-        queryKeys.investments,
-      ]) {
-        queryClient.invalidateQueries({ queryKey: key });
-      }
+      invalidateGlobalBudgetData(queryClient);
       setResult(response);
     },
   });
@@ -89,7 +82,7 @@ export function RestoreBackupModal({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+            className={primaryButtonClass}
           >
             {t('settings.backup.modal.close')}
           </button>
@@ -138,7 +131,7 @@ export function RestoreBackupModal({ onClose }: { onClose: () => void }) {
               <select
                 value={mode}
                 onChange={(e) => setMode(e.target.value as RestoreMode)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                className={`w-full ${fieldInputClass}`}
               >
                 <option value="merge">
                   {t('settings.backup.modal.modeMerge')}
@@ -166,7 +159,7 @@ export function RestoreBackupModal({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              className={neutralButtonClass}
             >
               {t('common.actions.cancel')}
             </button>
@@ -174,7 +167,7 @@ export function RestoreBackupModal({ onClose }: { onClose: () => void }) {
               type="button"
               disabled={!backup || restoreMutation.isPending}
               onClick={() => restoreMutation.mutate()}
-              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50"
+              className={primaryButtonClass}
             >
               {restoreMutation.isPending
                 ? t('settings.backup.modal.restoring')

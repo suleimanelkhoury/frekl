@@ -34,6 +34,9 @@ from app.schemas.summary import (
     TopItemsResponse,
     YearlyComparison,
 )
+from app.services.crud import apply_update
+from app.services.chronology import chronological_budgets
+from app.services.labels import simple_label
 from app.services.analysis import analyze_user_labels
 from app.services.excel_export import build_budget_excel
 from app.services.investments import investment_overview
@@ -112,16 +115,14 @@ def category_trend(
     name match). Budgets without that category contribute zeros, so the
     trend shows gaps instead of skipping months.
     """
-    budget_list = sorted(
-        current_user.budgets, key=lambda b: (b.year, b.month)
-    )[-months:]
+    budget_list = chronological_budgets(current_user.budgets)[-months:]
 
     trend: list[ChartDataPoint] = []
     for budget in budget_list:
         projected = Decimal("0")
         actual = Decimal("0")
         for cat in budget.categories:
-            if cat.name.strip().lower() == category.strip().lower():
+            if simple_label(cat.name) == simple_label(category):
                 projected = sum(
                     (item.projected_cost for item in cat.items), Decimal("0")
                 )
@@ -162,11 +163,11 @@ def top_items(
     """
     # key (lowercased label) -> (total, category, display label)
     totals: dict[str, tuple[Decimal, str, str]] = {}
-    budgets = sorted(current_user.budgets, key=lambda b: (b.year, b.month))
+    budgets = chronological_budgets(current_user.budgets)
     for budget in budgets:
         for category in budget.categories:
             for item in category.items:
-                key = item.label.strip().lower()
+                key = simple_label(item.label)
                 if key in totals:
                     total, cat, label = totals[key]
                     totals[key] = (total + item.actual_cost, cat, label)
@@ -205,16 +206,16 @@ def item_history(
     entries are returned in chronological budget order with per-entry
     SOLL/IST/difference and the summed totals.
     """
-    needle = label.strip().lower()
+    needle = simple_label(label)
     entries: list[ItemHistoryEntry] = []
     total_projected = Decimal("0")
     total_actual = Decimal("0")
 
-    budgets = sorted(current_user.budgets, key=lambda b: (b.year, b.month, b.id))
+    budgets = chronological_budgets(current_user.budgets)
     for budget in budgets:
         for category in budget.categories:
             for item in category.items:
-                if item.label.strip().lower() != needle:
+                if simple_label(item.label) != needle:
                     continue
                 entries.append(
                     ItemHistoryEntry(
@@ -403,9 +404,7 @@ def update_budget(
     """Update a budget's title, month, or year."""
     budget = get_user_budget(db, budget_id, current_user)
 
-    update_data = budget_in.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(budget, field, value)
+    apply_update(budget, budget_in)
 
     # Explicit touch: the column's onupdate only fires when at least one
     # field actually changes, and the response should always carry a

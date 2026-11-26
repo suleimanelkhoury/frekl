@@ -8,6 +8,7 @@ from app.core.deps import get_current_user
 from app.models.category import Category
 from app.models.user import User
 from app.schemas.category import CategoryCreate, CategoryResponse, CategoryUpdate
+from app.services.crud import apply_update
 from app.services.ownership import get_user_budget, get_user_category
 from app.services.touch import touch_budget, touch_budget_by_id
 
@@ -55,9 +56,7 @@ def update_category(
     """Update a category's name or sort order."""
     category = get_user_category(db, category_id, current_user)
 
-    update_data = category_in.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(category, field, value)
+    apply_update(category, category_in)
 
     touch_budget_by_id(db, category.budget_id)
     db.commit()

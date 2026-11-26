@@ -25,6 +25,7 @@ from app.models.category import Category
 from app.models.expense_item import ExpenseItem
 from app.models.income import Income
 from app.models.user import User
+from app.services.chronology import chronological_budgets
 from app.schemas.backup import (
     BackupBudget,
     BackupData,
@@ -38,7 +39,7 @@ BACKUP_VERSION = 1
 
 def export_user_backup(user: User) -> BackupData:
     """Collect all of the user's budgets into a backup document."""
-    budgets = sorted(user.budgets, key=lambda b: (b.year, b.month, b.id))
+    budgets = chronological_budgets(user.budgets)
     return BackupData(
         format=BACKUP_FORMAT,
         version=BACKUP_VERSION,
