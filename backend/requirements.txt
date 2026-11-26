@@ -28,6 +28,8 @@ python-multipart==0.0.34
 
 # Excel import
 openpyxl==3.1.3
+# Required by openpyxl to embed images (the frekl. logo in exports)
+Pillow==11.3.0
 
 # Logging
 structlog==24.2.0

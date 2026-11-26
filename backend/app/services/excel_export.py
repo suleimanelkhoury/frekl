@@ -7,7 +7,7 @@ so an exported budget looks like the original and can be re-imported.
 
 Template layout:
 
-  - B2:        budget title, e.g. "OKTOBER 2026 BUDGET" (Century Gothic 22pt,
+  - B2:        budget title, e.g. "OKTOBER 2026 BUDGET" (IBM Plex Sans 22pt,
                medium bottom border)
   - Income:    "SOLL MONATLICHES EINKOMMEN" (B4:C4, merged B4:B6, label C),
                labels C4/C5, values E4/E5, "Monatliches Gsmt.einkommen" (C6,
@@ -31,17 +31,24 @@ Template layout:
   - DIAGRAMME: a second sheet mirroring the original's chart sheet, linking
                the first few item rows' IST values per category.
 
-Number format and colors match the template: Century Gothic font,
-Euro number format, gray #D9D9D9 fill on totals/balance cells.
+Styling matches the app UI: IBM Plex Sans, the terracotta brand
+palette (brand-600 table headers with white text, brand-50 banding,
+brand-200 borders), warm gray-200 fills on totals/balance cells, and
+difference colors following the app's balanceColor semantics (teal =
+under budget, rose = over). Print setup is A4 portrait scaled to
+exactly one page wide.
 """
 
 from decimal import Decimal
 from io import BytesIO
+from pathlib import Path
 
 from openpyxl import Workbook
+from openpyxl.drawing.image import Image as XLImage
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
+from openpyxl.worksheet.properties import PageSetupProperties
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
@@ -49,29 +56,43 @@ from app.models.budget import Budget
 from app.services.excel_layout import GERMAN_MONTH_NAMES
 from app.models.category import Category
 
-# ── Fonts / colors matching the original template ──
-CENTURY_GOTHIC = "Century Gothic"
-FONT_TITLE = Font(name=CENTURY_GOTHIC, size=22)
-FONT_SECTION = Font(name=CENTURY_GOTHIC, size=10, bold=True)
-FONT_BODY = Font(name=CENTURY_GOTHIC, size=10)
-FONT_BOLD = Font(name=CENTURY_GOTHIC, size=10, bold=True)
-FONT_WHITE_BOLD = Font(name=CENTURY_GOTHIC, size=10, bold=True, color="FFFFFF")
+# ── Fonts / colors matching the app UI ──
+# UI palette (see @theme in index.css)
+GRAY_200 = "E6E2DF"
+BRAND_600 = "B8492C"  # primary terracotta (title + wordmark)
+BRAND_700 = "993A24"
+# IBM Plex Sans is the app's UI font (self-hosted in the frontend);
+# amounts keep the euro format of the template.
+UI_FONT = "IBM Plex Sans"
+FONT_TITLE = Font(name=UI_FONT, size=22, bold=True, color=BRAND_600)
+FONT_SECTION = Font(name=UI_FONT, size=10, bold=True, color=BRAND_700)
+FONT_BODY = Font(name=UI_FONT, size=10)
+FONT_BOLD = Font(name=UI_FONT, size=10, bold=True)
+FONT_WHITE_BOLD = Font(name=UI_FONT, size=10, bold=True, color="FFFFFF")
 
-# Table colors (from the original's "Personal monthly budget" style)
-TEAL = "47B0B8"
-TEAL_DARK = "24585C"    # header row fill (theme4 -0.5)
-TEAL_LIGHT = "DAEFF1"   # banded stripe fill (theme4 +0.8)
-TEAL_BORDER = "91D0D4"  # thin border (theme4 +0.4)
+# Difference text colors — same semantics as the UI's balanceColor:
+# positive (under budget) = teal-600, negative (over budget) =
+# rose-800 (the expenses series color).
+FONT_DIFF_POS = Font(name=UI_FONT, size=10, bold=True, color="0D9488")
+FONT_DIFF_NEG = Font(name=UI_FONT, size=10, bold=True, color="9F1239")
 
-# Gray fill used on totals / balance cells (theme 0 white, -15% tint)
-TOTAL_FILL = PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid")
-HEADER_FILL = PatternFill(start_color=TEAL_DARK, end_color=TEAL_DARK, fill_type="solid")
-BAND_FILL = PatternFill(start_color=TEAL_LIGHT, end_color=TEAL_LIGHT, fill_type="solid")
+# Table colors — the app's brand palette (see @theme in index.css):
+# terracotta header with white text, brand-50 banding, brand-200
+# borders.
+BRAND_HEADER = "B8492C"  # brand-600 — table header fill (primary buttons)
+BRAND_BAND = "FDF5F2"    # brand-50 — banded stripe fill
+BRAND_BORDER = "F5CDBD"  # brand-200 — thin borders
+BRAND_ACCENT = "E08264"  # brand-400 — double top border on totals
+
+# Gray fill on totals / balance cells — warm gray-200 from the UI
+TOTAL_FILL = PatternFill(start_color=GRAY_200, end_color=GRAY_200, fill_type="solid")
+HEADER_FILL = PatternFill(start_color=BRAND_HEADER, end_color=BRAND_HEADER, fill_type="solid")
+BAND_FILL = PatternFill(start_color=BRAND_BAND, end_color=BRAND_BAND, fill_type="solid")
 
 # Borders
-THIN_TEAL = Side(style="thin", color=TEAL_BORDER)
+THIN_BRAND = Side(style="thin", color=BRAND_BORDER)
 TABLE_BORDER = Border(
-    left=THIN_TEAL, right=THIN_TEAL, top=THIN_TEAL, bottom=THIN_TEAL
+    left=THIN_BRAND, right=THIN_BRAND, top=THIN_BRAND, bottom=THIN_BRAND
 )
 SIMPLE_BORDER = Border(
     left=Side(style="thin"),
@@ -79,12 +100,13 @@ SIMPLE_BORDER = Border(
     top=Side(style="thin"),
     bottom=Side(style="thin"),
 )
-TITLE_BORDER = Border(bottom=Side(style="medium"))
-TOTAL_TOP_BORDER = Border(top=Side(style="double", color=TEAL))
+TITLE_BORDER = Border(bottom=Side(style="medium", color=BRAND_600))
+TOTAL_TOP_BORDER = Border(top=Side(style="double", color=BRAND_ACCENT))
 
-# Euro number format (matches the template exactly)
+# Euro number format (matches the template's layout; the negative
+# color is set per cell with the UI palette instead of [RED])
 EURO_NUMBER_FORMAT = (
-    '_-[$€-2]\\ * #,##0.00_-;[RED]-[$€-2]\\ * #,##0.00_-;'
+    '_-[$€-2]\\ * #,##0.00_-;-[$€-2]\\ * #,##0.00_-;'
     '_-[$€-2]\\ * "-"??_-;_-@_-'
 )
 
@@ -137,6 +159,53 @@ TITLE_ROW_HEIGHT = 29.25
 def _euro(value: Decimal) -> float:
     """Convert a Decimal amount to a float for writing into a cell."""
     return float(value or Decimal("0"))
+
+
+# The frekl. brand corner embedded in exports: the pig + "frekl."
+# wordmark (real IBM Plex Sans Bold, terracotta) composed into one
+# transparent PNG — a picture can never overflow the sheet's borders,
+# unlike cell text rendered with fallback fonts.
+LOGO_PATH = Path(__file__).parent / "assets" / "frekl-corner.png"
+
+
+def _setup_a4(ws: Worksheet) -> None:
+    """Print setup: A4, portrait, scaled to exactly one page wide (any
+    number of pages tall) — so the export always keeps A4 proportions
+    instead of spilling over page borders."""
+    ws.page_setup.paperSize = ws.PAPERSIZE_A4
+    ws.page_setup.orientation = "portrait"
+    ws.page_setup.fitToWidth = 1
+    ws.page_setup.fitToHeight = 0  # 0 = as many pages tall as needed
+    ws.sheet_properties.pageSetUpPr = PageSetupProperties(fitToPage=True)
+    # Narrow-ish margins so the fit-to-width scaling stays readable
+    ws.page_margins.left = 0.5
+    ws.page_margins.right = 0.5
+    ws.page_margins.top = 0.75
+    ws.page_margins.bottom = 0.75
+
+
+def _add_logo(ws: Worksheet) -> None:
+    """Place the frekl. brand corner (pig + wordmark) at the sheet's
+    top right (I2 — starts at the title row so it lines up with the
+    page title, and ends flush inside the used range). Images float
+    over cells, so the import layout is untouched — and a picture can
+    never overflow the sheet's borders the way cell text with fallback
+    fonts can."""
+    logo = XLImage(str(LOGO_PATH))
+    logo.width = 158
+    logo.height = 64
+    ws.add_image(logo, "I2")
+
+
+def _diff_font(soll: Decimal, ist: Decimal, *, bold: bool) -> Font:
+    """Font for a difference cell (SOLL − IST): teal when under budget
+    (positive), rose when over (negative) — the UI's balanceColor
+    semantics; neutral otherwise."""
+    if soll - ist > 0:
+        return Font(name=UI_FONT, size=10, bold=bold, color="0D9488")
+    if soll - ist < 0:
+        return Font(name=UI_FONT, size=10, bold=bold, color="9F1239")
+    return FONT_BOLD if bold else FONT_BODY
 
 
 def _title_block_title(budget: Budget) -> str:
@@ -401,6 +470,7 @@ def _write_category_block(
                 value=f"={soll_letter}{row}-{ist_letter}{row}",
             )
             diff.number_format = EURO_NUMBER_FORMAT
+            diff.font = _diff_font(soll, ist, bold=False)
             diff.border = TABLE_BORDER
             # Banded rows (alternate light teal like the template's stripe)
             if idx % 2 == 1:
@@ -434,11 +504,15 @@ def _write_category_block(
             value=f"={soll_letter}{row}-{ist_letter}{row}",
         )
         diff.number_format = EURO_NUMBER_FORMAT
-        diff.font = FONT_BOLD
+        diff.font = _diff_font(
+            sum((i.projected_cost or Decimal("0") for i in items), Decimal("0")),
+            sum((i.actual_cost or Decimal("0") for i in items), Decimal("0")),
+            bold=True,
+        )
         # Double top border on the totals row (like the template style)
         ws.cell(row=row, column=label_col).border = Border(
-            top=Side(style="double", color=TEAL),
-            left=THIN_TEAL, right=THIN_TEAL, bottom=THIN_TEAL,
+            top=Side(style="double", color=BRAND_ACCENT),
+            left=THIN_BRAND, right=THIN_BRAND, bottom=THIN_BRAND,
         )
         row += 1
 
@@ -462,6 +536,7 @@ def _write_diagramme_sheet(wb: Workbook, budget: Budget) -> None:
     """
     ws = wb.create_sheet("DIAGRAMME")
     ws.append(["Category", "Subcategory", "Cost"])
+    _setup_a4(ws)
 
     groups = _category_groups(budget)
     # The template lists at most ~2 rows per category at fixed BUDGET rows;
@@ -529,6 +604,7 @@ def build_budget_excel(budget: Budget, db: Session) -> bytes:
     ws = wb.active
     ws.title = "BUDGET"
     _set_worksheet_widths(ws)
+    _setup_a4(ws)
 
     # Row 2: title
     title_cell = ws["B2"]
@@ -574,6 +650,9 @@ def build_budget_excel(budget: Budget, db: Session) -> bytes:
 
     # ── DIAGRAMME sheet ───────────────────────
     _write_diagramme_sheet(wb, loaded)
+
+    # ── frekl. logo (top right, floating over free columns) ──
+    _add_logo(ws)
 
     buf = BytesIO()
     wb.save(buf)
