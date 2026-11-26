@@ -300,7 +300,50 @@ class TestBuildBudgetExcel:
         assert "IST GESAMTKOSTEN" in totals_texts
         assert "GESAMTUNTERSCHIED" in totals_texts
 
-    def test_excel_per_row_and_subtotal_difference(self, client, auth_headers, db_session):
+    def test_excel_separator_row_between_categories(
+        self, client, auth_headers, db_session
+    ):
+        """Consecutive categories in one block get a blank row between them."""
+        bid = _create_budget_with_data(client, auth_headers)
+        from app.models.budget import Budget
+
+        # Add a third category (idx 2 → left block), so the left block
+        # holds Wohnen (idx 0) AND Transport (idx 2).
+        r = client.post(
+            f"/api/budgets/{bid}/categories",
+            json={"name": "Versicherung", "sort_order": 2},
+            headers=auth_headers,
+        )
+        cat3 = r.json()["id"]
+        client.post(
+            f"/api/categories/{cat3}/items",
+            json={"label": "Hausrat", "projected_cost": "10", "actual_cost": "10"},
+            headers=auth_headers,
+        )
+
+        budget = db_session.get(Budget, bid)
+        xlsx = build_budget_excel(budget, db_session)
+
+        wb = load_workbook(BytesIO(xlsx))
+        ws = wb["BUDGET"]
+
+        # Left block: Wohnen rows 12-15, blank row 16, Transport 17-20
+        # (header 17, Hausrat 18, Zwischensumme 19)... Versicherung has
+        # sort_order 2 → idx 2 → LEFT block; Transport (idx 1) → right.
+        # Left: Wohnen (12-15), blank 16, Versicherung (17-19).
+        assert ws["B16"].value is None  # the separator row
+        assert ws["B17"].value == "VERSICHERUNG"
+        assert ws["B18"].value == "Hausrat"
+        assert ws["B19"].value == "Zwischensumme"
+
+        # Left block is now taller: 4 + 1 separator + 3 = 8 rows →
+        # last_cat_row = 19, totals at 20/22/24.
+        assert ws["G20"].value == "SOLL GESAMTKOSTEN"
+        assert str(ws["J20"].value) == "=SUM(C12:C19,H12:H19)"
+
+    def test_excel_per_row_and_subtotal_difference(
+        self, client, auth_headers, db_session
+    ):
         """Every item row has its own Unterschied formula; Zwischensumme too."""
         bid = _create_budget_with_data(client, auth_headers)
         from app.models.budget import Budget

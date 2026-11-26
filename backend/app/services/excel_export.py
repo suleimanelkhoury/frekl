@@ -15,7 +15,8 @@ Template layout:
                IST block: B8 (merged B8:B10), labels C9/C10, E9/E10, E11 SUM
   - Balance:   merged labels in G4:I5, G6:I7, G8:I9 with thin borders, values
                J4:J5, J6:J7, J8:J9 (gray fill, bold) referencing the totals
-  - Categories: rows from 12, two side-by-side blocks as real Excel tables:
+  - Categories: rows from 12, two side-by-side blocks as real Excel
+                tables (one blank row between consecutive categories):
                Left:  label=B, SOLL=C, IST=D, diff=E
                Right: label=G, SOLL=H, IST=I, diff=J
                Each category is its own named table (Housing, Entertainment,
@@ -374,10 +375,16 @@ def _write_category_block(
         difference formula
       - a "Zwischensumme" subtotal row (double top border) with SUM + diff
 
+    One blank row separates consecutive categories so each table reads as
+    its own block (the importer skips empty rows, so files still
+    round-trip).
+
     Returns the first free row below the block.
     """
     row = start_row
-    for cat, items in block:
+    for index, (cat, items) in enumerate(block):
+        if index > 0:
+            row += 1  # blank separator row between categories
         # Header row (UPPERCASE like the template)
         headers = [cat.name.upper(), "Geschätzte Kosten", "Tatsächl. Kosten", "Unterschied"]
         for i, header in enumerate(headers):
@@ -453,8 +460,11 @@ def _write_category_block(
 
 
 def _block_row_count(block: list[tuple[Category, list]]) -> int:
-    """Number of rows a category block occupies (headers + items + subtotals)."""
-    return sum(2 + len(items) for _, items in block)
+    """Number of rows a category block occupies (headers + items +
+    subtotals + the blank separator rows between categories)."""
+    if not block:
+        return 0
+    return sum(2 + len(items) for _, items in block) + (len(block) - 1)
 
 
 def _write_diagramme_sheet(wb: Workbook, budget: Budget) -> None:
