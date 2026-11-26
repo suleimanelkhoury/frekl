@@ -127,6 +127,43 @@ body {
   background-color: #f9fafb;
 }
 
+/* ── Search open/close animations ───────────── */
+/* Desktop dropdown fades/slides in and out; the mobile sheet slides
+   from under the header. Keyframes are global so Tailwind's
+   animate-[...] arbitrary values can reference them. */
+@keyframes search-drop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes search-drop-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes search-sheet-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes search-sheet-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
 /* Calculator-style hover fade for chart bar segments (Recharts bars
    can't take Tailwind hover classes) */
 .recharts-bar-rectangle path,
