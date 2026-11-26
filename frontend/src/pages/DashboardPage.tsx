@@ -116,7 +116,7 @@ export function DashboardPage() {
   return (
     <div>
       {/* Stacks above sm: title, then full-width action buttons */}
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className={pageTitleClass}>
           {t('dashboard.title')}
         </h1>
